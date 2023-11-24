@@ -1,6 +1,6 @@
 <launch>
-  <arg name="model" default="$(find irbot_rviz)/urdf/irbot.urdf.xacro"/>
-  <arg name="rvizconfig" default="$(find irbot_rviz)/rviz/irbot_slam_karto.rviz" />
+  <arg name="model" default="$(find slam_itbdelabo_rviz)/urdf/irbot.urdf.xacro"/>
+  <arg name="rvizconfig" default="$(find slam_itbdelabo_rviz)/rviz/irbot_slam_karto.rviz" />
 
   <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
 
@@ -9,7 +9,7 @@
   <node pkg="topic_tools" type="transform" name="irbot_laser_scan" args="/scan /irbot/scan sensor_msgs/LaserScan 'sensor_msgs.msg.LaserScan(header=std_msgs.msg.Header(seq=m.header.seq,stamp=rospy.Time.now(),frame_id=m.header.frame_id),angle_min=m.angle_min,angle_max=m.angle_max,angle_increment=m.angle_increment,time_increment=m.time_increment,scan_time=m.scan_time,range_min=m.range_min,range_max=m.range_max,ranges=m.ranges,intensities=m.intensities)' --import sensor_msgs std_msgs rospy"/>
 
   <node pkg="slam_karto" type="slam_karto" name="slam_karto" output="screen">
-    <rosparam command="load" file="$(find irbot_rviz)/launch/config/karto_mapper_params.yaml"/>
+    <rosparam command="load" file="$(find slam_itbdelabo_rviz)/launch/config/karto_mapper_params.yaml"/>
     <remap from="/scan" to="/irbot/scan"/>
   </node>
 
