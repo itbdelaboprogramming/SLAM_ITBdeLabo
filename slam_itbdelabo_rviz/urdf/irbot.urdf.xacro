@@ -32,7 +32,7 @@
     <visual>
       <origin xyz="0 -0.0097 0" rpy="1.5708 0 1.5708"/>
       <geometry>
-        <mesh filename="package://irbot_rviz/urdf/stl/main_body.stl" scale="0.01 0.01 0.01"/>
+        <mesh filename="package://slam_itbdelabo_rviz/urdf/stl/main_body.stl" scale="0.01 0.01 0.01"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -55,7 +55,7 @@
     <visual>
       <origin xyz="0.0 -0.235 0.0" rpy="0 0 4.7168"/>
       <geometry>
-        <mesh filename="package://irbot_rviz/urdf/stl/RPLidar.stl" scale="0.01 0.01 0.01"/>
+        <mesh filename="package://slam_itbdelabo_rviz/urdf/stl/RPLidar.stl" scale="0.01 0.01 0.01"/>
       </geometry>
       <material name="dark"/>
     </visual>
