@@ -1,6 +1,6 @@
 <launch>
-  <arg name="model" default="$(find irbot_rviz)/urdf/irbot.urdf.xacro"/>
-  <arg name="rvizconfig" default="$(find irbot_rviz)/rviz/irbot_slam_hector.rviz" />
+  <arg name="model" default="$(find slam_itbdelabo_rviz)/urdf/irbot.urdf.xacro"/>
+  <arg name="rvizconfig" default="$(find slam_itbdelabo_rviz)/rviz/irbot_slam_hector.rviz" />
   <arg name="odom_frame" default="odom"/>
   <arg name="base_frame" default="base_footprint"/>
   <arg name="scan_subscriber_queue_size" default="5"/>
