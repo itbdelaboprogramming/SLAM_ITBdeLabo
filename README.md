@@ -1,6 +1,20 @@
 # SLAM - ITBdelabo
 ITBdeLabo project to develop SLAM robot
 
+# Install requires
+1. Once you clone this repository to your workspace, go to the `install_requires` folder.
+```
+cd ~/catkin_ws/src/SLAM_ITBdeLabo/install_requires
+```
+2. Edit the permission of the executable file.
+```
+sudo chmod +x noetic_dep.sh
+```
+3. Run the `noetic_dep.sh` script.
+```
+sudo ./noetic_dep.sh
+```
+
 # Preparation
 1. Choose the local network of your machine that you want to connect. If you are using ZeroTier, find your robot machine IP address in ZeroTier network.
 2. Connect to the mobile robot from a computer that has been connected to the network by entering this command into the computer's terminal.
