@@ -1,0 +1,7 @@
+# request fields
+bool start
+bool pause
+bool stop
+---
+# response fields
+bool success
