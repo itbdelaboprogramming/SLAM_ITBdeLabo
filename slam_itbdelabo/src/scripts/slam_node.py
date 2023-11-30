@@ -5,6 +5,11 @@ from slam_itbdelabo.msg import HardwareCommand
 from geometry_msgs.msg import Twist
 from slam_itbdelabo.srv import Mapping, MappingResponse, MappingRequest
 
+# Global Variables
+start_mapping = False
+stop_mapping = False
+pause_mapping = False
+
 # Initialize ROS Node
 rospy.init_node('slam_node')
 
@@ -22,9 +27,6 @@ def cmd_vel_callback(msg):
 cmd_vel_sub = rospy.Subscriber('cmd_vel', Twist, cmd_vel_callback)
 
 # Create ROS Service
-start_mapping = False
-stop_mapping = False
-pause_mapping = False
 def handle_mapping(req: MappingRequest):
     global start_mapping
     global pause_mapping
@@ -57,8 +59,10 @@ frequency = (1/compute_period) * 1000
 rate = rospy.Rate(frequency)
 
 while not rospy.is_shutdown():
-    # convention, rot_vel (+) -> clockwise (navigation/compass-based)
+    # TODO: add logic for start mapping, pause mapping, and stop mapping 
+
     hardware_command_msg = HardwareCommand()
+    # convention, rot_vel (+) -> clockwise (navigation/compass-based)
     if x_vel > 0 :
         # forward
         hardware_command_msg.movement_command = 3 
