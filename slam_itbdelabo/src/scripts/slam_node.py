@@ -48,7 +48,7 @@ def handle_mapping(req: SetMappingRequest):
         success = True
         response = SetMappingResponse(success)
         return response
-rospy.Service('mapping', SetMapping, handle_mapping)
+rospy.Service('set_mapping', SetMapping, handle_mapping)
 
 # Get ROS Parameters (loaded from slam.yaml)
 compute_period = rospy.get_param("/compute_period")
@@ -60,6 +60,7 @@ rate = rospy.Rate(frequency)
 
 while not rospy.is_shutdown():
     # TODO: add logic for start mapping, pause mapping, and stop mapping 
+    
     print(f"start_mapping = {start_mapping}, pause_mapping = {pause_mapping}, stop_mapping = {stop_mapping}")
     hardware_command_msg = HardwareCommand()
     # convention, rot_vel (+) -> clockwise (navigation/compass-based)
