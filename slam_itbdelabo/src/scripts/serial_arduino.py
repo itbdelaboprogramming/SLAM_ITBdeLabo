@@ -34,7 +34,9 @@ if __name__ == '__main__':
         baud_rate = rospy.get_param("~baud_rate", 57600)
 
         device_id = rospy.get_param("~device_id",'usb-1a86_USB2.0-Serial-if00-port0')
-        serial_port = os.popen('echo "irbot123.." | sudo -S bash {}/get_usb.bash {}'.format(os.path.dirname(os.path.abspath(__file__)), device_id)).read().strip()
+        password = rospy.get_param("~password",'irbot123..')
+        
+        serial_port = os.popen('echo "' + password + '" | sudo -S bash {}/get_usb.bash {}'.format(os.path.dirname(os.path.abspath(__file__)), device_id)).read().strip()
 
         ser = serial.Serial(serial_port, baud_rate, timeout=None)
 
@@ -46,7 +48,8 @@ if __name__ == '__main__':
                 odom_data_parsed = [x.rstrip() for x in line_odom]
             except:
                 #time.sleep(0.1)
-                serial_port = os.popen('echo "irbot123.." | sudo -S bash {}/get_usb.bash {}'.format(os.path.dirname(os.path.abspath(__file__)), device_id)).read().strip()
+                serial_port = os.popen('echo "' + password + '" | sudo -S bash {}/get_usb.bash {}'.format(os.path.dirname(os.path.abspath(__file__)), device_id)).read().strip()
+
                 while (serial_port == device_id):
                     time.sleep(0.5)
                     serial_port = os.popen('sudo bash {}/get_usb.bash {}'.format(os.path.dirname(os.path.abspath(__file__)), device_id)).read().strip()
