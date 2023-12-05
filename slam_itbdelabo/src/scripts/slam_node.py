@@ -3,6 +3,7 @@
 import rospy
 from slam_itbdelabo.msg import HardwareCommand
 from geometry_msgs.msg import Twist
+from nav_msgs.msg import OccupancyGrid
 from slam_itbdelabo.srv import SetMapping, SetMappingResponse, SetMappingRequest
 
 # Global Variables
@@ -31,22 +32,30 @@ def handle_mapping(req: SetMappingRequest):
     global start_mapping
     global pause_mapping
     global stop_mapping
-    if sum([req.start, req.pause, req.stop]) > 1:
+    try:
+        rospy.wait_for_message('map', OccupancyGrid, timeout=1.0)
+    except rospy.ROSException:
         success = False
-        response = SetMappingResponse(success)
+        code = 1
+        response = SetMappingResponse(success, code)
         return response
     else:
-        start_mapping = False
-        pause_mapping = False
-        stop_mapping = False
-        if req.start:
-            start_mapping = True
-        elif req.pause:
-            pause_mapping = True
-        elif req.stop:
-            stop_mapping = True
-        success = True
-        response = SetMappingResponse(success)
+        if sum([req.start, req.pause, req.stop]) > 1:
+            success = False
+            code = 2
+        else:
+            start_mapping = False
+            pause_mapping = False
+            stop_mapping = False
+            if req.start:
+                start_mapping = True
+            elif req.pause:
+                pause_mapping = True
+            elif req.stop:
+                stop_mapping = True
+            success = True
+            code = 0
+        response = SetMappingResponse(success, code)
         return response
 rospy.Service('set_mapping', SetMapping, handle_mapping)
 
