@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>slam_itbdelabo_navigation</name>
+  <version>0.0.0</version>
+  <description>
+    The slam_itbdelabo_navigation provides roslaunch scripts for starting the navigation.
+  </description>
+  <maintainer email="syahrul@todo.todo">syahrul</maintainer>
+  <license>TODO</license>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>amcl</exec_depend>
+  <exec_depend>map_server</exec_depend>
+  <exec_depend>move_base</exec_depend>
+  <exec_depend>turtlebot3_bringup</exec_depend>
+</package>

@@ -1,2 +1,4 @@
 uint8 movement_command
 uint8 cam_angle_command
+float32 right_motor_speed
+float32 left_motor_speed
