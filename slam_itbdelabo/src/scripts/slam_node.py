@@ -44,36 +44,21 @@ def set_mapping_ahndler(req: SetMappingRequest):
         success = True
         code = 0
         if req.start:
-            try:
-                rospy.wait_for_message('map', OccupancyGrid, timeout=5.0)
-            except rospy.ROSException:
-                success = False
-                code = 1
-                response = SetMappingResponse(success, code)
-                return response
-            else:
-                start_mapping = True
+            start_mapping = True
         elif req.pause:
             pause_mapping = True
         elif req.stop:
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            path_name = f"{slam_folder_path}/{timestamp}"
+            hardware_command_msg = HardwareCommand()                
+            hardware_command_pub.publish(hardware_command_msg)      # subprocess is quite blocking, stop now before saving map
             try:
-                rospy.wait_for_message('map', OccupancyGrid, timeout=5.0)
-            except rospy.ROSException:
+                result = subprocess.run(["rosrun", "map_server", "map_saver","-f", path_name], stdout=subprocess.DEVNULL, timeout=5.0)
+            except Exception as e:
                 success = False
-                code = 1
-                response = SetMappingResponse(success, code)
-                return response
+                code = 3
             else:
                 stop_mapping = True
-                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                path_name = f"{slam_folder_path}/{timestamp}"
-                hardware_command_msg = HardwareCommand()                
-                hardware_command_pub.publish(hardware_command_msg)      # subprocess is quite blocking, stop now before saving map
-                try:
-                    result = subprocess.run(["rosrun", "map_server", "map_saver","-f", path_name], stdout=subprocess.DEVNULL, timeout=5.0)
-                except Exception as e:
-                    success = False
-                    code = 3
         response = SetMappingResponse(success, code)
         return response
 rospy.Service('set_mapping', SetMapping, set_mapping_ahndler)
