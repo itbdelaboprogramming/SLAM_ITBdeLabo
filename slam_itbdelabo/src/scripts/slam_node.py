@@ -30,12 +30,12 @@ def cmd_vel_callback(msg):
 cmd_vel_sub = rospy.Subscriber('cmd_vel', Twist, cmd_vel_callback)
 
 # Create ROS Service
-def handle_mapping(req: SetMappingRequest):
+def set_mapping_ahndler(req: SetMappingRequest):
     global start_mapping
     global pause_mapping
     global stop_mapping
     try:
-        rospy.wait_for_message('map', OccupancyGrid, timeout=1.0)
+        rospy.wait_for_message('map', OccupancyGrid, timeout=5.0)
     except rospy.ROSException:
         success = False
         code = 1
@@ -59,14 +59,16 @@ def handle_mapping(req: SetMappingRequest):
                 stop_mapping = True
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 path_name = f"{slam_folder_path}/{timestamp}"
+                hardware_command_msg = HardwareCommand()                
+                hardware_command_pub.publish(hardware_command_msg)      # subprocess is quite blocking, stop now before saving map
                 try:
-                    result = subprocess.run(["rosrun", "map_server", "map_saver","-f", path_name], stdout=subprocess.DEVNULL, timeout=2.0)
+                    result = subprocess.run(["rosrun", "map_server", "map_saver","-f", path_name], stdout=subprocess.DEVNULL, timeout=5.0)
                 except Exception as e:
                     success = False
                     code = 3
         response = SetMappingResponse(success, code)
         return response
-rospy.Service('set_mapping', SetMapping, handle_mapping)
+rospy.Service('set_mapping', SetMapping, set_mapping_ahndler)
 
 # Get ROS Parameters (loaded from slam.yaml)
 compute_period = rospy.get_param("/compute_period")
