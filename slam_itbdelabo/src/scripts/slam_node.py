@@ -34,28 +34,36 @@ def set_mapping_ahndler(req: SetMappingRequest):
     global start_mapping
     global pause_mapping
     global stop_mapping
-    try:
-        rospy.wait_for_message('map', OccupancyGrid, timeout=5.0)
-    except rospy.ROSException:
+    if sum([req.start, req.pause, req.stop]) > 1:
         success = False
-        code = 1
-        response = SetMappingResponse(success, code)
-        return response
+        code = 2
     else:
-        if sum([req.start, req.pause, req.stop]) > 1:
-            success = False
-            code = 2
-        else:
-            start_mapping = False
-            pause_mapping = False
-            stop_mapping = False
-            success = True
-            code = 0
-            if req.start:
+        start_mapping = False
+        pause_mapping = False
+        stop_mapping = False
+        success = True
+        code = 0
+        if req.start:
+            try:
+                rospy.wait_for_message('map', OccupancyGrid, timeout=5.0)
+            except rospy.ROSException:
+                success = False
+                code = 1
+                response = SetMappingResponse(success, code)
+                return response
+            else:
                 start_mapping = True
-            elif req.pause:
-                pause_mapping = True
-            elif req.stop:
+        elif req.pause:
+            pause_mapping = True
+        elif req.stop:
+            try:
+                rospy.wait_for_message('map', OccupancyGrid, timeout=5.0)
+            except rospy.ROSException:
+                success = False
+                code = 1
+                response = SetMappingResponse(success, code)
+                return response
+            else:
                 stop_mapping = True
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 path_name = f"{slam_folder_path}/{timestamp}"
