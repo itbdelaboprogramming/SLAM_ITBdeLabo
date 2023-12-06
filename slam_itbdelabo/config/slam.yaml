@@ -3,3 +3,4 @@ max_speed_linear: 1.0     # m/s
 max_speed_angular: 2.0    # rad/s
 wheel_radius: 2.75        # cm (current prototype's wheel has diameter of 5.5 cm approximately)
 wheel_distance: 23.0      # cm
+slam_folder_path: "/home/itbdelabo/SLAM_DATA"
