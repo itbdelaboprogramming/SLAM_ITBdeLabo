@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!-- Debug version of slam.launch on robot-->
+<launch>
+    <include file="$(find slam_itbdelabo)/launch/stream_lidar.launch" />
+    <node pkg="slam_itbdelabo" type="slam_node.py" name="slam_node" respawn="true" output="screen"></node>
+    <rosparam command="load" file="$(find slam_itbdelabo)/config/slam.yaml" />
+</launch>
