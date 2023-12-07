@@ -3,7 +3,10 @@
 import rospy
 from slam_itbdelabo.msg import HardwareCommand
 from geometry_msgs.msg import Twist
+from nav_msgs.msg import OccupancyGrid
 from slam_itbdelabo.srv import SetMapping, SetMappingResponse, SetMappingRequest
+import subprocess
+from datetime import datetime
 
 # Global Variables
 start_mapping = False
@@ -27,28 +30,38 @@ def cmd_vel_callback(msg):
 cmd_vel_sub = rospy.Subscriber('cmd_vel', Twist, cmd_vel_callback)
 
 # Create ROS Service
-def handle_mapping(req: SetMappingRequest):
+def set_mapping_ahndler(req: SetMappingRequest):
     global start_mapping
     global pause_mapping
     global stop_mapping
     if sum([req.start, req.pause, req.stop]) > 1:
         success = False
-        response = SetMappingResponse(success)
-        return response
+        code = 2
     else:
         start_mapping = False
         pause_mapping = False
         stop_mapping = False
+        success = True
+        code = 0
         if req.start:
             start_mapping = True
         elif req.pause:
             pause_mapping = True
         elif req.stop:
-            stop_mapping = True
-        success = True
-        response = SetMappingResponse(success)
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            path_name = f"{slam_folder_path}/{timestamp}"
+            hardware_command_msg = HardwareCommand()                
+            hardware_command_pub.publish(hardware_command_msg)      # subprocess is quite blocking, stop now before saving map
+            try:
+                result = subprocess.run(["rosrun", "map_server", "map_saver","-f", path_name], stdout=subprocess.DEVNULL, timeout=5.0)
+            except Exception as e:
+                success = False
+                code = 3
+            else:
+                stop_mapping = True
+        response = SetMappingResponse(success, code)
         return response
-rospy.Service('set_mapping', SetMapping, handle_mapping)
+rospy.Service('set_mapping', SetMapping, set_mapping_ahndler)
 
 def constrain(val, min_val, max_val):
     return min(max_val, max(min_val, val))
@@ -57,8 +70,14 @@ def constrain(val, min_val, max_val):
 compute_period = rospy.get_param("/compute_period")
 max_speed_linear = rospy.get_param("/max_speed_linear")
 max_speed_angular = rospy.get_param("/max_speed_angular")
+<<<<<<< HEAD
 wheel_radius = rospy.get_param("/wheel_radius","2.75")		# in cm
 wheel_distance = rospy.get_param("/wheel_distance","23.0")		# in cm
+=======
+wheel_radius = rospy.get_param("/wheel_radius","5.0")		# in cm
+wheel_distance = rospy.get_param("/wheel_radius","5.0")		# in cm
+slam_folder_path = rospy.get_param("/slam_folder_path")
+>>>>>>> bdbf4fdd7da42ca66eae3a7fc45a673c821e2cdb
 
 frequency = (1/compute_period) * 1000
 rate = rospy.Rate(frequency)
@@ -68,15 +87,23 @@ while not rospy.is_shutdown():
     print(f"start_mapping = {start_mapping}, pause_mapping = {pause_mapping}, stop_mapping = {stop_mapping}")
     hardware_command_msg = HardwareCommand()
     
+<<<<<<< HEAD
     if start_mapping == 1 :
     	# inverse kinematics
     	vx = constrain(vx, -max_speed_linear, max_speed_linear)
     	wz = constrain(wz, -max_speed_angular, max_speed_angular)
     	hardware_command_msg.right_motor_speed = (vx*100.0/wheel_radius - wz*wheel_distance/(2.0*wheel_radius))*9.55
     	hardware_command_msg.left_motor_speed = (vx*100.0/wheel_radius + wz*wheel_distance/(2.0*wheel_radius))*9.55
+=======
+    if start_mapping:
+        # inverse kinematics
+        hardware_command_msg.right_motor_speed = (vx*100.0/wheel_radius - wz*wheel_distance/(2.0*wheel_radius))*9.55
+        hardware_command_msg.left_motor_speed = (vx*100.0/wheel_radius + wz*wheel_distance/(2.0*wheel_radius))*9.55
+>>>>>>> bdbf4fdd7da42ca66eae3a7fc45a673c821e2cdb
     else:
-    	hardware_command_msg.right_motor_speed = 0.0
-    	hardware_command_msg.left_motor_speed = 0.0
+        hardware_command_msg.right_motor_speed = 0.0
+        hardware_command_msg.left_motor_speed = 0.0
+
     
     # convention, rot_vel (+) -> clockwise (navigation/compass-based)
     if vx > 0 :
