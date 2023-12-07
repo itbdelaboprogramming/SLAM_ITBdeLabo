@@ -70,14 +70,9 @@ def constrain(val, min_val, max_val):
 compute_period = rospy.get_param("/compute_period")
 max_speed_linear = rospy.get_param("/max_speed_linear")
 max_speed_angular = rospy.get_param("/max_speed_angular")
-<<<<<<< HEAD
 wheel_radius = rospy.get_param("/wheel_radius","2.75")		# in cm
 wheel_distance = rospy.get_param("/wheel_distance","23.0")		# in cm
-=======
-wheel_radius = rospy.get_param("/wheel_radius","5.0")		# in cm
-wheel_distance = rospy.get_param("/wheel_radius","5.0")		# in cm
 slam_folder_path = rospy.get_param("/slam_folder_path")
->>>>>>> bdbf4fdd7da42ca66eae3a7fc45a673c821e2cdb
 
 frequency = (1/compute_period) * 1000
 rate = rospy.Rate(frequency)
@@ -87,19 +82,12 @@ while not rospy.is_shutdown():
     print(f"start_mapping = {start_mapping}, pause_mapping = {pause_mapping}, stop_mapping = {stop_mapping}")
     hardware_command_msg = HardwareCommand()
     
-<<<<<<< HEAD
     if start_mapping == 1 :
     	# inverse kinematics
     	vx = constrain(vx, -max_speed_linear, max_speed_linear)
     	wz = constrain(wz, -max_speed_angular, max_speed_angular)
     	hardware_command_msg.right_motor_speed = (vx*100.0/wheel_radius - wz*wheel_distance/(2.0*wheel_radius))*9.55
     	hardware_command_msg.left_motor_speed = (vx*100.0/wheel_radius + wz*wheel_distance/(2.0*wheel_radius))*9.55
-=======
-    if start_mapping:
-        # inverse kinematics
-        hardware_command_msg.right_motor_speed = (vx*100.0/wheel_radius - wz*wheel_distance/(2.0*wheel_radius))*9.55
-        hardware_command_msg.left_motor_speed = (vx*100.0/wheel_radius + wz*wheel_distance/(2.0*wheel_radius))*9.55
->>>>>>> bdbf4fdd7da42ca66eae3a7fc45a673c821e2cdb
     else:
         hardware_command_msg.right_motor_speed = 0.0
         hardware_command_msg.left_motor_speed = 0.0
