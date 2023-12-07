@@ -50,12 +50,15 @@ def handle_mapping(req: SetMappingRequest):
         return response
 rospy.Service('set_mapping', SetMapping, handle_mapping)
 
+def constrain(val, min_val, max_val):
+    return min(max_val, max(min_val, val))
+
 # Get ROS Parameters (loaded from slam.yaml)
 compute_period = rospy.get_param("/compute_period")
 max_speed_linear = rospy.get_param("/max_speed_linear")
 max_speed_angular = rospy.get_param("/max_speed_angular")
-wheel_radius = rospy.get_param("/wheel_radius","5.0")		# in cm
-wheel_distance = rospy.get_param("/wheel_radius","5.0")		# in cm
+wheel_radius = rospy.get_param("/wheel_radius","2.75")		# in cm
+wheel_distance = rospy.get_param("/wheel_distance","23.0")		# in cm
 
 frequency = (1/compute_period) * 1000
 rate = rospy.Rate(frequency)
@@ -67,6 +70,8 @@ while not rospy.is_shutdown():
     
     if start_mapping == 1 :
     	# inverse kinematics
+    	vx = constrain(vx, -max_speed_linear, max_speed_linear)
+    	wz = constrain(wz, -max_speed_angular, max_speed_angular)
     	hardware_command_msg.right_motor_speed = (vx*100.0/wheel_radius - wz*wheel_distance/(2.0*wheel_radius))*9.55
     	hardware_command_msg.left_motor_speed = (vx*100.0/wheel_radius + wz*wheel_distance/(2.0*wheel_radius))*9.55
     else:
@@ -76,7 +81,7 @@ while not rospy.is_shutdown():
     # convention, rot_vel (+) -> clockwise (navigation/compass-based)
     if vx > 0 :
         # forward
-        hardware_command_msg.movement_command = 3 
+        hardware_command_msg.movement_command = 3
     elif wz < 0:
         # left
         hardware_command_msg.movement_command = 2 
