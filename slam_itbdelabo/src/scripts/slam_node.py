@@ -71,7 +71,7 @@ def set_own_map_handler(req: SetOwnMapRequest):
         base_map_name = os.path.splitext(req.map_name)[0]
         path_name = f"{slam_folder_path}/{base_map_name}.yaml"
         map_server = subprocess.Popen(["rosrun", "map_server", "map_server", path_name])
-    elif map_server is not None:
+    elif not req.enable and map_server is not None:
         map_server.send_signal(signal.SIGINT)
     success = True
     code = 0
