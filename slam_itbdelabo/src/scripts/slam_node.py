@@ -4,9 +4,10 @@ import rospy
 from slam_itbdelabo.msg import HardwareCommand
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import OccupancyGrid
-from slam_itbdelabo.srv import SetMapping, SetMappingResponse, SetMappingRequest
+from slam_itbdelabo.srv import SetMapping, SetMappingResponse, SetMappingRequest, SetOwnMap, SetOwnMapRequest, SetOwnMapResponse
 import subprocess
 from datetime import datetime
+import os, signal
 
 # Global Variables
 start_mapping = False
@@ -30,7 +31,7 @@ def cmd_vel_callback(msg):
 cmd_vel_sub = rospy.Subscriber('cmd_vel', Twist, cmd_vel_callback)
 
 # Create ROS Service
-def set_mapping_ahndler(req: SetMappingRequest):
+def set_mapping_handler(req: SetMappingRequest):
     global start_mapping
     global pause_mapping
     global stop_mapping
@@ -61,7 +62,22 @@ def set_mapping_ahndler(req: SetMappingRequest):
                 stop_mapping = True
         response = SetMappingResponse(success, code)
         return response
-rospy.Service('set_mapping', SetMapping, set_mapping_ahndler)
+rospy.Service('set_mapping', SetMapping, set_mapping_handler)
+
+map_server: subprocess.Popen = None
+def set_own_map_handler(req: SetOwnMapRequest):
+    global map_server
+    if req.enable:
+        base_map_name = os.path.splitext(req.map_name)[0]
+        path_name = f"{slam_folder_path}/{base_map_name}.yaml"
+        map_server = subprocess.Popen(["rosrun", "map_server", "map_server", path_name])
+    elif map_server is not None:
+        map_server.send_signal(signal.SIGINT)
+    success = True
+    code = 0
+    response = SetOwnMapResponse(success, code)
+    return response
+rospy.Service('set_own_map', SetOwnMap, set_own_map_handler)
 
 def constrain(val, min_val, max_val):
     return min(max_val, max(min_val, val))

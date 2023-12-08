@@ -1,0 +1,7 @@
+# request fields
+bool enable
+string map_name
+---
+# response fields
+bool success
+uint8 code
