@@ -1,16 +1,16 @@
 <launch>
   <!-- Arguments -->
   <arg name="map_file" default="$(find slam_itbdelabo_navigation)/maps/map.yaml"/>
-  <arg name="open_rviz" default="true"/>
+  <arg name="open_rviz" default="false"/>
   <arg name="move_forward_only" default="false"/>
-
-  <!-- AMCL -->
-  <include file="$(find slam_itbdelabo_navigation)/launch/amcl.launch"/>
 
   <!-- move_base -->
   <include file="$(find slam_itbdelabo_navigation)/launch/move_base.launch">
     <arg name="move_forward_only" value="$(arg move_forward_only)"/>
   </include>
+  
+  <!-- exploration -->
+  <include file="$(find explore_lite)/launch/explore.launch" />
 
   <!-- rviz -->
   <group if="$(arg open_rviz)"> 

@@ -6,7 +6,4 @@
         <param name="port" value="$(arg port)"/>
         <param name="baud" value="$(arg baud)"/>
     </node>
-    
-    
-    <!-- node pkg="irbot" type="serial_arduino.py" name="serial_odom"/ --> <!-- output="screen"/ -->
-</launch>
+ </launch>
