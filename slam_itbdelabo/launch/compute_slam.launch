@@ -1,5 +1,6 @@
 <launch>
     <arg name="use_own_map" default="false"/>
     <include file="$(find slam_itbdelabo_rviz)/launch/slam_hector.launch" pass_all_args="true"/>
+    <include file="$(find slam_itbdelabo_navigation)/launch/slam_itbdelabo_navigation.launch" pass_all_args="true"/>
     <node pkg="robot_pose_publisher" type="robot_pose_publisher" name="robot_pose_publisher_node" output="screen"></node>
 </launch>
