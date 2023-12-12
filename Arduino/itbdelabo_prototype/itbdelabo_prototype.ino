@@ -177,9 +177,9 @@ void callback_function( const slam_itbdelabo::HardwareCommand& msg){
   right_motor_speed_ = msg.right_motor_speed;
   left_motor_speed_ = msg.left_motor_speed;
 
-  String OmegaString = String(String(dt) + ", " + String(current_channel) + ", Left RPM: " + String(left_motor_speed_,2) + " RPM, Right RPM: " + String(right_motor_speed_,2) + " RPM.");
-  char OmegaInfo[100]; OmegaString.toCharArray(OmegaInfo, 100);
-  nh.loginfo(OmegaInfo);
+//  String OmegaString = String(String(dt) + ", " + String(current_channel) + ", Left RPM: " + String(left_motor_speed_,2) + " RPM, Right RPM: " + String(right_motor_speed_,2) + " RPM.");
+//  char OmegaInfo[100]; OmegaString.toCharArray(OmegaInfo, 100);
+//  nh.loginfo(OmegaInfo);
 }
 
 // Create subscriber for hardware command info
