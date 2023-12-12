@@ -71,12 +71,12 @@ def scan_callback(msg: LaserScan):
     left_obs = np.any(np_left_filtered <= distance_threshold)
     if left_obs:
         vx = 0.0
-        wz = 2.0
+        wz = 1.0
     elif right_obs:
         vx = 0.0
-        wz = -2.0
+        wz = -1.0
     else:
-        vx = 0.15
+        vx = 0.10
         wz = 0.0
 scan_sub = rospy.Subscriber("scan", LaserScan, scan_callback)
 
