@@ -67,26 +67,17 @@ def scan_callback(msg: LaserScan):
     left_filtered_arr = [x for x in left_arr if not math.isnan(x) and not math.isinf(x)]
     np_right_filtered = np.array(right_filtered_arr)
     np_left_filtered = np.array(left_filtered_arr)
-    right_obs_arr = np.where(np_right_filtered <= distance_threshold)
-    left_obs_arr = np.where(np_left_filtered <= distance_threshold)
-    right_nearest_dist = min(right_obs_arr)
-    left_nearest_dist = min(left_obs_arr)
-    if len(left_obs_arr) == 0 and len(right_obs_arr) == 0:
-        vx = 0.10
-        wz = 0.0
-    elif len(left_obs_arr) > 0 and len(right_obs_arr) == 0:
+    right_obs = np.any(np_right_filtered <= distance_threshold)
+    left_obs = np.any(np_left_filtered <= distance_threshold)
+    if left_obs:
         vx = 0.0
         wz = 1.0
-    elif len(left_obs_arr) == 0 and len(right_obs_arr) > 0:
+    elif right_obs:
         vx = 0.0
         wz = -1.0
     else:
-        if left_nearest_dist < right_nearest_dist:
-            vx = 0.0
-            wz = 1.0
-        else:
-            vx = 0.0
-            wz = -1.0
+        vx = 0.10
+        wz = 0.0
 scan_sub = rospy.Subscriber("scan", LaserScan, scan_callback)
 
 # Create ROS Service
