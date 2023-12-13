@@ -24,7 +24,6 @@ add_message_files(
 add_service_files(
   FILES
   SetMapping.srv
-  SetOwnMap.srv
 )
 
 ## Generate actions in the 'action' folder

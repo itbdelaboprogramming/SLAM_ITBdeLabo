@@ -5,7 +5,7 @@ from slam_itbdelabo.msg import HardwareCommand
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import OccupancyGrid
-from slam_itbdelabo.srv import SetMapping, SetMappingResponse, SetMappingRequest, SetOwnMap, SetOwnMapRequest, SetOwnMapResponse
+from slam_itbdelabo.srv import SetMapping, SetMappingResponse, SetMappingRequest
 import subprocess
 from datetime import datetime
 import os, signal
@@ -99,35 +99,10 @@ def set_mapping_handler(req: SetMappingRequest):
         elif req.pause:
             pause_mapping = True
         elif req.stop:
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            path_name = f"{slam_folder_path}/{timestamp}"
-            hardware_command_msg = HardwareCommand()                
-            hardware_command_pub.publish(hardware_command_msg)      # subprocess is quite blocking, stop now before saving map
-            try:
-                result = subprocess.run(["rosrun", "map_server", "map_saver","-f", path_name], stdout=subprocess.DEVNULL)
-            except Exception as e:
-                success = False
-                code = 3
-            else:
-                stop_mapping = True
+            stop_mapping = True
         response = SetMappingResponse(success, code)
         return response
 rospy.Service('set_mapping', SetMapping, set_mapping_handler)
-
-map_server: subprocess.Popen = None
-def set_own_map_handler(req: SetOwnMapRequest):
-    global map_server
-    if req.enable:
-        base_map_name = os.path.splitext(req.map_name)[0]
-        path_name = f"{slam_folder_path}/{base_map_name}.yaml"
-        map_server = subprocess.Popen(["rosrun", "map_server", "map_server", path_name])
-    elif not req.enable and map_server is not None:
-        map_server.send_signal(signal.SIGINT)
-    success = True
-    code = 0
-    response = SetOwnMapResponse(success, code)
-    return response
-rospy.Service('set_own_map', SetOwnMap, set_own_map_handler)
 
 def constrain(val, min_val, max_val):
     return min(max_val, max(min_val, val))
@@ -136,7 +111,6 @@ frequency = (1/compute_period) * 1000
 rate = rospy.Rate(frequency)
 
 while not rospy.is_shutdown():
-    # print(f"start_mapping = {start_mapping}, pause_mapping = {pause_mapping}, stop_mapping = {stop_mapping}")
     hardware_command_msg = HardwareCommand()
     
     if start_mapping == 1 :
