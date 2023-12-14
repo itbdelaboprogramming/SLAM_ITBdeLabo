@@ -113,7 +113,7 @@ rate = rospy.Rate(frequency)
 while not rospy.is_shutdown():
     hardware_command_msg = HardwareCommand()
     
-    if start_mapping == 1 :
+    if start_mapping:
     	# inverse kinematics
         vx = constrain(vx, -max_speed_linear, max_speed_linear)
         wz = constrain(wz, -max_speed_angular, max_speed_angular)
@@ -125,15 +125,16 @@ while not rospy.is_shutdown():
 
     
     # convention, rot_vel (+) -> clockwise (navigation/compass-based)
-    if vx > 0 :
-        # forward
-        hardware_command_msg.movement_command = 3
-    elif wz < 0:
-        # left
-        hardware_command_msg.movement_command = 2 
-    elif wz > 0:
-        # right
-        hardware_command_msg.movement_command = 1 
+    if start_mapping:
+        if vx > 0 :
+            # forward
+            hardware_command_msg.movement_command = 3
+        elif wz < 0:
+            # left
+            hardware_command_msg.movement_command = 2 
+        elif wz > 0:
+            # right
+            hardware_command_msg.movement_command = 1 
     else:
         # stop
         hardware_command_msg.movement_command = 0
