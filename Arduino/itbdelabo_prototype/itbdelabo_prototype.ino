@@ -64,20 +64,20 @@
 #define INCREMENT_POS 10
 
 // Constants
-#define LOOP_TIME 10                // in milliseconds
-#define PERIOD_TIME 2*pow(10,6)     // in microseconds
-#define RECEIVER_LPF_CUT_OFF_FREQ 0.25 // in Hertz (Hz)
-#define ENC_LPF_CUT_OFF_FREQ 3      // in Hertz (Hz)
-#define PWM_THRESHOLD 150           // in microseconds of receiver signal
-#define MAX_RPM_MOVE 180             // in RPM for longitudinal movement
-#define MAX_RPM_TURN 70  // in RPM for rotational movement
-#define WHEEL_RADIUS 5.0            // in cm
-#define WHEEL_DISTANCE 33.0         // in cm
-#define DISTANCE 200                // in cm
-#define MAX_PWM 250                 // saturation PWM for action control (0-255)
-#define ARMED 0x00                  // armed condition
-#define DISARMED 0x01               // disarmed condition
-#define HMC5983_ADDRESS 0x1E        // magnetometer I2C address
+#define LOOP_TIME 10                    // in milliseconds
+#define PERIOD_TIME 2*pow(10,6)         // in microseconds
+#define RECEIVER_LPF_CUT_OFF_FREQ 0.25  // in Hertz (Hz)
+#define ENC_LPF_CUT_OFF_FREQ 3          // in Hertz (Hz)
+#define PWM_THRESHOLD 150               // in microseconds of receiver signal
+#define MAX_RPM_MOVE 180                // in RPM for longitudinal movement
+#define MAX_RPM_TURN 70                 // in RPM for rotational movement
+#define WHEEL_RADIUS 2.75               // in cm
+#define WHEEL_DISTANCE 23.0             // in cm
+#define DISTANCE 200                    // in cm
+#define MAX_PWM 250                     // saturation PWM for action control (0-255)
+#define ARMED 0x00                      // armed condition
+#define DISARMED 0x01                   // disarmed condition
+#define HMC5983_ADDRESS 0x1E            // magnetometer I2C address
 
 #define KP_RIGHT_MOTOR 5.0
 #define KI_RIGHT_MOTOR 0.03
@@ -104,8 +104,7 @@ LPF dlpf(1);
 pidIr RightMotorPID(KP_RIGHT_MOTOR, KI_RIGHT_MOTOR, KD_RIGHT_MOTOR);
 pidIr LeftMotorPID(KP_LEFT_MOTOR, KI_LEFT_MOTOR, KD_LEFT_MOTOR);
 
-//RC_Receiver receiver(PIN_CH_1, PIN_CH_2, PIN_CH_3, PIN_CH_4, PIN_CH_5, PIN_CH_6, PIN_CH_7, PIN_CH_8);
-
+// Magnetometer variables
 struct magnetometer {
   int x_msb;
   int x_lsb;
@@ -117,31 +116,36 @@ struct magnetometer {
   float hx;
   float hz;
   float hy;
-};
+}; magnetometer magnetometer;
 
-magnetometer magnetometer;
-
+// Encoder's callback functions
 void callbackRA(){RightEncoder.doEncoderA();}
 void callbackRB(){RightEncoder.doEncoderB();}
 void callbackLA(){LeftEncoder.doEncoderA();}
 void callbackLB(){LeftEncoder.doEncoderB();}
 
+// Receiver signal variables
 byte current_channel = 1;
 uint16_t receiver_ch_value[9]; //PIN_CH_1 --> receiver_ch_value[1], and so on.
 uint16_t receiver_ch_filtered[9]; //PIN_CH_1 --> receiver_ch_value[1], and so on.
 
-float right_rpm_filtered;
-float left_rpm_filtered;
+// RPM variables
+float right_rpm_filtered = 0;
+float left_rpm_filtered = 0;
+float right_rpm_target = 0;
+float left_rpm_target = 0;
 
+// Heading from magnetometer
 float heading = 0;
 float heading_filtered = 0;
 
+// Action control
 int move_value;
 int turn_value;
-float right_rpm_target = 0;
-float left_rpm_target = 0;
 int right_pwm = 0;
 int left_pwm = 0;
+
+// Failsafe
 uint16_t failsafe = DISARMED;
 
 // Vehicle Pose or State
@@ -151,24 +155,23 @@ float pose_theta = 0;       // in rad
 float velocity_right = 0;   // in cm/s
 float velocity_left = 0;    // in cm/s
 
+// Timestamp variables
 unsigned long time_now = 0;
 unsigned long time_last = 0;
 float dt;
 
+// Servo
 Servo camServo;
 int servo_pos = MAX_SERVO_POS;
 
 //ROS Communication
 ros::NodeHandle nh;
 
-// Varible for hardware command
+// Varibles for hardware command
 uint8_t movement_command_ = 0;
 uint8_t cam_angle_command_ = 0;
 float right_motor_speed_ = 0;
 float left_motor_speed_ = 0;
-
-int a = 0;
-int b = 0;
 
 // Callback function that handles data subscribing
 void callback_function( const slam_itbdelabo::HardwareCommand& msg){
@@ -294,51 +297,45 @@ void update_failsafe(){
 }
 
 void update_cmd(){
-  if(failsafe == DISARMED){ // Disarmed condition
+  if(failsafe == DISARMED){             //Disarmed condition
     right_pwm = 0;
     left_pwm = 0;
     vehicle_stop();
-    
     digitalWrite(RED_LED, LOW);
     digitalWrite(BLUE_LED, LOW);
-  } else{ // Armed condition
-    if(receiver_ch_value[3] < 1400){
-      /*
-      //----------------------------Open loop-----------------------------//
-      move_value = tuneReceiverSignaltoRPM(receiver_ch_filtered[1], MAX_PWM);
-      turn_value = tuneReceiverSignaltoRPM(receiver_ch_filtered[2], MAX_PWM);
-      
-      right_pwm = move_value - turn_value;
-      left_pwm = move_value + turn_value;
-      //------------------------------------------------------------------//
-      */
-
-      
+  } else{                               //Armed condition
+    if(receiver_ch_value[3] < 1400){      //RC operation
+             
       //---------------------------Close loop-----------------------------//
-      //move_value = tuneReceiverSignaltoRPM(receiver_ch_filtered[1], MAX_RPM_MOVE);
-      //turn_value = tuneReceiverSignaltoRPM(receiver_ch_filtered[2], MAX_RPM_TURN);
-
-      
-      if(receiver_ch_filtered[1] >= 1500 + PWM_THRESHOLD){
+      //Determine the move_value based on RC channel 1, added a minimum value threshold of PWM_THRESHOLD value for the prototype to be driven 
+      if(receiver_ch_filtered[1] >= 1500 + PWM_THRESHOLD){  //Move forward
+          //Re-scale the RC signal value from [1500+PWM_THRESHOLD, 2000] to [0,MAX_RPM_TURN]
           move_value = map(receiver_ch_filtered[1], 1500 + PWM_THRESHOLD, 2000, 0, MAX_RPM_MOVE);
-      } else if(receiver_ch_filtered[1] <= 1500 - PWM_THRESHOLD){
+      } else if(receiver_ch_filtered[1] <= 1500 - PWM_THRESHOLD){ //Move backward
+          //Re-scale the RC signal value from [1500-PWM_THRESHOLD, 1000] to [0,-MAX_RPM_TURN+90]
+          //+90 is added to compensate the unsymetrical value due to the encoder interrupts
           move_value = map(receiver_ch_filtered[1], 1500 - PWM_THRESHOLD, 1000, 0, -MAX_RPM_MOVE+90);
-      } else {
+      } else {  //Stop
           move_value = 0;
       }
 
-      if(receiver_ch_filtered[2] >= 1450 + PWM_THRESHOLD){
+      //Determine the turn_value based on RC channel 2, added a minimum value threshold of PWM_THRESHOLD value for the prototype to be driven
+      if(receiver_ch_filtered[2] >= 1450 + PWM_THRESHOLD){  //Turn right
+          //Re-scale the RC signal value from [1450+PWM_THRESHOLD, 1950] to [0,MAX_RPM_TURN+80]
+          //+80 is added to compensate the unsymetrical value due to the encoder interrupts
           turn_value = map(receiver_ch_filtered[2], 1450 + PWM_THRESHOLD, 1950, 0, MAX_RPM_TURN+80);
-      } else if(receiver_ch_filtered[2] <= 1450 - PWM_THRESHOLD){
+      } else if(receiver_ch_filtered[2] <= 1450 - PWM_THRESHOLD){ //Turn left
+          //Re-scale the RC signal value from [1450-PWM_THRESHOLD, 1000] to [0,-MAX_RPM_TURN]
           turn_value = map(receiver_ch_filtered[2], 1450 - PWM_THRESHOLD, 1000, 0, -MAX_RPM_TURN);
-      } else {
+      } else {  //Stop
           turn_value = 0;
       }
       
-      
+      //Compute the RPM target for each motor
       right_rpm_target = move_value - turn_value;
       left_rpm_target = move_value + turn_value;
-      
+
+      //Compute the action control (PWM) value for the motor based on PID and set it to be zero if the command is truely zero
       if(right_rpm_target == 0 && left_rpm_target == 0){
           right_pwm = 0;
           left_pwm = 0;
@@ -359,11 +356,12 @@ void update_cmd(){
       
       digitalWrite(RED_LED, LOW);
       digitalWrite(BLUE_LED, HIGH);
-    } else {
-      // Part to control vehicle heading based on the target position
+    } else {  //PC commands operation
+      //Part to control motor target based on the PC commands
       right_rpm_target = right_motor_speed_;
       left_rpm_target = left_motor_speed_;
 
+      //Compute the action control (PWM) value for the motor based on PID and set it to be zero if the command is truely zero
       if(right_rpm_target == 0 && left_rpm_target == 0){
           right_pwm = 0;
           left_pwm = 0;
@@ -383,20 +381,13 @@ void update_cmd(){
       digitalWrite(RED_LED, HIGH);
       digitalWrite(BLUE_LED, LOW);
     }
+
+    //Drive the motors based on the PWM values that have been computed
     vehicleGo(right_pwm, left_pwm);
     write_servo();
   }
 }
 
-int tuneReceiverSignaltoRPM(int receiver_signal, int max_rpm){
-    if(receiver_signal >= 1500 + PWM_THRESHOLD){
-        return map(receiver_signal, 1500 + PWM_THRESHOLD, 2000, 0, max_rpm);
-    } else if(receiver_signal <= 1500 - PWM_THRESHOLD){
-        return map(receiver_signal, 1500 - PWM_THRESHOLD, 1000, 0, -max_rpm);
-    } else {
-        return 0;
-    }
-}
 
 void vehicle_stop(){
     RightMotor.stop();
@@ -418,15 +409,19 @@ void calculatePose(){
     float delta_angle_right = RightEncoder.getDeltaRad();
     float delta_angle_left = LeftEncoder.getDeltaRad();
 
+    // Calculate robot poses based on wheel odometry
     pose_x = pose_x + WHEEL_RADIUS/2.0 * (delta_angle_right + delta_angle_left) * sin(pose_theta);
     pose_y = pose_y + WHEEL_RADIUS/2.0 * (delta_angle_right + delta_angle_left) * cos(pose_theta);
     pose_theta = pose_theta + (delta_angle_right - delta_angle_left) * WHEEL_RADIUS/WHEEL_DISTANCE;
-
+    
+    // Wrap the orientation angle
     pose_theta = wrapAngleRadian(pose_theta);
 
+    // Measure the wheel speed
     RightEncoder.measureOmega();
     LeftEncoder.measureOmega();
 
+    // Filter the measurement of the wheel speed
     right_rpm_filtered = RightRPM_lpf.filter(RightEncoder.getOmegaRPM(), dt);
     left_rpm_filtered = LeftRPM_lpf.filter(LeftEncoder.getOmegaRPM(), dt);
 
