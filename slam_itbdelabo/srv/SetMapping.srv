@@ -1,8 +1,0 @@
-# request fields
-bool start
-bool pause
-bool stop
----
-# response fields
-bool success
-uint8 code

@@ -5,7 +5,6 @@ from slam_itbdelabo.msg import HardwareCommand
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import OccupancyGrid
-from slam_itbdelabo.srv import SetMapping, SetMappingResponse, SetMappingRequest
 import subprocess
 from datetime import datetime
 import os, signal
@@ -84,30 +83,6 @@ def scan_callback(msg: LaserScan):
         vx = 0.10
         wz = 0.0
 scan_sub = rospy.Subscriber("scan", LaserScan, scan_callback)
-
-# Create ROS Service
-def set_mapping_handler(req: SetMappingRequest):
-    global start_mapping
-    global pause_mapping
-    global stop_mapping
-    if sum([req.start, req.pause, req.stop]) > 1:
-        success = False
-        code = 2
-    else:
-        start_mapping = False
-        pause_mapping = False
-        stop_mapping = False
-        success = True
-        code = 0
-        if req.start:
-            start_mapping = True
-        elif req.pause:
-            pause_mapping = True
-        elif req.stop:
-            stop_mapping = True
-        response = SetMappingResponse(success, code)
-        return response
-rospy.Service('set_mapping', SetMapping, set_mapping_handler)
 
 # MQTT Set Up
 def on_connect(client, userdata, flags, rc):
