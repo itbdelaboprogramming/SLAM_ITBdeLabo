@@ -11,11 +11,15 @@ from datetime import datetime
 import os, signal
 import numpy as np
 import math
+import paho.mqtt.client as mqtt
+import random
+import json
 
 # Global Variables
 start_mapping = False
 stop_mapping = False
 pause_mapping = False
+compute_slam_process = None
 
 # Initialize ROS Node
 rospy.init_node('slam_node')
@@ -29,6 +33,7 @@ wheel_distance = rospy.get_param("/wheel_distance","23.0")		# in cm
 view_degrees = rospy.get_param("/view_degrees")
 distance_threshold = rospy.get_param("/distance_threshold")
 slam_folder_path = rospy.get_param("/slam_folder_path")
+mqtt_broker_ip = rospy.get_param("/mqtt_broker_ip")
 
 # Create ROS Publisher
 hardware_command_pub = rospy.Publisher('hardware_command', HardwareCommand, queue_size=1)
@@ -104,6 +109,52 @@ def set_mapping_handler(req: SetMappingRequest):
         return response
 rospy.Service('set_mapping', SetMapping, set_mapping_handler)
 
+# MQTT Set Up
+def on_connect(client, userdata, flags, rc):
+    print("Connected with mqtt broker")
+    client.subscribe("/mapping")
+    client.subscribe("/lidar")
+
+def on_message(client, userdata, msg):
+    global start_mapping
+    global pause_mapping
+    global stop_mapping
+    global compute_slam_process
+    if msg.topic == "/mapping":
+        payload = int(msg.payload)
+        if payload == 1:
+            start_mapping = True
+            pause_mapping = False
+            stop_mapping = False
+        elif payload == 2:
+            start_mapping = False
+            pause_mapping = True
+            stop_mapping = False
+        elif payload == 3:
+            start_mapping = False
+            pause_mapping = False
+            stop_mapping = True
+        else:
+            start_mapping = False
+            pause_mapping = False
+            stop_mapping = False
+    elif msg.topic == "/lidar":
+        data = json.loads(msg.payload.decode("utf-8"))
+        enable = bool(data["enable"])
+        use_own_map = bool(data["use_own_map"])
+        if enable and compute_slam_process is None:
+            if use_own_map:
+                compute_slam_process = subprocess.Popen(["roslaunch", "slam_itbdelabo", "compute_slam.launch", "use_own_map:=true"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            else:
+                compute_slam_process = subprocess.Popen(["roslaunch", "slam_itbdelabo", "compute_slam.launch"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        elif not enable and compute_slam_process is not None:
+            os.killpg(os.getpgid(compute_slam_process.pid), signal.SIGTERM)
+        
+mqtt_client = mqtt.Client(client_id=f"slam_node_${random.randint(0,1000)}")
+mqtt_client.on_connect = on_connect
+mqtt_client.on_message = on_message
+mqtt_client.connect(mqtt_broker_ip, 1883, 60)
+
 def constrain(val, min_val, max_val):
     return min(max_val, max(min_val, val))
 
@@ -112,7 +163,7 @@ rate = rospy.Rate(frequency)
 
 while not rospy.is_shutdown():
     hardware_command_msg = HardwareCommand()
-    
+    print(f"start_mapping: {start_mapping}, pause_mapping: {pause_mapping}, stop_mapping: {stop_mapping}")
     if start_mapping:
     	# inverse kinematics
         vx = constrain(vx, -max_speed_linear, max_speed_linear)
@@ -140,5 +191,6 @@ while not rospy.is_shutdown():
         hardware_command_msg.movement_command = 0
     
     hardware_command_pub.publish(hardware_command_msg)
+    mqtt_client.loop(timeout=compute_period/1000)
     
     rate.sleep()

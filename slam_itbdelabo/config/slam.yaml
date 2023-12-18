@@ -6,3 +6,4 @@ wheel_distance: 23.0      # cm
 view_degrees: 45.0        # deg
 distance_threshold: 0.7   # m
 slam_folder_path: "/home/itbdelabo/SLAM_DATA"
+mqtt_broker_ip: "192.168.18.180"
