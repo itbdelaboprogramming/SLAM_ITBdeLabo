@@ -86,7 +86,7 @@ scan_sub = rospy.Subscriber("scan", LaserScan, scan_callback)
 
 # MQTT Set Up
 def on_connect(client, userdata, flags, rc):
-    print("Connected with mqtt broker")
+    print(f"Connected with MQTT Broker at {mqtt_broker_ip}")
     client.subscribe("/mapping")
     client.subscribe("/lidar")
 
@@ -119,8 +119,10 @@ def on_message(client, userdata, msg):
         use_own_map = bool(data["use_own_map"])
         if enable and compute_slam_process is None:
             if use_own_map:
+                print("Launching compute_slam with own map")
                 compute_slam_process = subprocess.Popen(["roslaunch", "slam_itbdelabo", "compute_slam.launch", "use_own_map:=true"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             else:
+                print("Launching compute slam")
                 compute_slam_process = subprocess.Popen(["roslaunch", "slam_itbdelabo", "compute_slam.launch"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         elif not enable and compute_slam_process is not None:
             os.killpg(os.getpgid(compute_slam_process.pid), signal.SIGTERM)
@@ -138,7 +140,7 @@ rate = rospy.Rate(frequency)
 
 while not rospy.is_shutdown():
     hardware_command_msg = HardwareCommand()
-    print(f"start_mapping: {start_mapping}, pause_mapping: {pause_mapping}, stop_mapping: {stop_mapping}")
+    # print(f"start_mapping: {start_mapping}, pause_mapping: {pause_mapping}, stop_mapping: {stop_mapping}")
     if start_mapping:
     	# inverse kinematics
         vx = constrain(vx, -max_speed_linear, max_speed_linear)
