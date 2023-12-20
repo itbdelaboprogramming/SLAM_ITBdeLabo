@@ -1,8 +1,38 @@
+/*
+The Arduino Program for ITBdeLabo's Prototype
+
+Overview:
+This Arduino code can take commands from both Radio Remote Control (RC Taranis X7) or Personal Computer (PC) via ROS communication message.
+ROS communication message received by this Arduino code should in the form of "slam_itbdelabo/HardwareCommand" msg.
+Please refer to SLAM_ITBdeLabo documentation to read more about SLAM_ITBdeLabo ROS package. (https://github.com/itbdelaboprogramming/SLAM_ITBdeLabo/tree/main)
+
+Libraries (needed):
+- <PinChangeInterrupt.h> : to change the encoder pins become interrupt pins
+- <Wire.h>               : for I2C communication
+- <Servo.h>              : to control servo
+- <ros.h> and <slam_itbdelabo/HardwareCommand.h> : generated from "rosserial_arduino make_libraries.py ." and is used for ROS communication.
+
+Debugging section: Contain blocks that are needed to monitor some variables. Uncomment blocks that you need to monitor in Serial Monitor. It can be one or multiple block.
+
+In "setup()":
+- setupPinReceiver() : Setup the RC Receiver pins as INPUT
+- debugHeader()      : Print headers for debugging that depends on what block is active
+
+In "loop()":
+- getReceiverSignal() : Get the value of the RC signals. One channel per loop.
+- calculatePose()     : Calculate robot poses based on wheel odometry and measure the wheel speed based on encoder readings.
+- update_failsafe()   : Read RC ch.4 signal to determine the failsafe state. The prototype is ARMED only when RC ch.4 signal has value of more than 1400.
+                        When the prototype is ARMED, it is ready to receive commands from both RC or PC
+- update_cmd()        : Update the commands for the prototype. There are RC mode, hold mode, and PC commands mode depends the value of RC ch.3 signal.
+                        Once the commands are received, PID controller will compute PWM value to drive the motors or the servo.
+                        Some configurations are implemented to compensate the non-ideal condition. 
+- debug()             : Print the value of some variables in Serial Monitor for debugging.
+ 
+*/
 #include <Wire.h>
 #include <ros.h>
 #include <slam_itbdelabo/HardwareCommand.h>
 #include <Servo.h>
-
 
 #include "Motor.h"
 #include "Encoder.h"
@@ -24,7 +54,6 @@
 //#define VEHICLE_POSITION
 //#define VEHICLE_SPEED
 //#define EKF_DATA
-
 
 // Receiver PIN
 #define NUM_CH 5
@@ -184,7 +213,6 @@ void callback_function( const slam_itbdelabo::HardwareCommand& msg){
 //  char OmegaInfo[100]; OmegaString.toCharArray(OmegaInfo, 100);
 //  nh.loginfo(OmegaInfo);
 }
-
 // Create subscriber for hardware command info
 ros::Subscriber<slam_itbdelabo::HardwareCommand> sub("hardware_command", callback_function);
 
