@@ -5,5 +5,4 @@ wheel_radius: 2.75        # cm (current prototype's wheel has diameter of 5.5 cm
 wheel_distance: 23.0      # cm
 view_degrees: 45.0        # deg
 distance_threshold: 0.7   # m
-slam_folder_path: "/home/itbdelabo/SLAM_DATA"
-mqtt_broker_ip: "192.168.18.180"
+mqtt_broker_ip: ""

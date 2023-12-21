@@ -31,7 +31,6 @@ wheel_radius = rospy.get_param("/wheel_radius","2.75")		# in cm
 wheel_distance = rospy.get_param("/wheel_distance","23.0")		# in cm
 view_degrees = rospy.get_param("/view_degrees")
 distance_threshold = rospy.get_param("/distance_threshold")
-slam_folder_path = rospy.get_param("/slam_folder_path")
 mqtt_broker_ip = rospy.get_param("/mqtt_broker_ip")
 
 # Create ROS Publisher
