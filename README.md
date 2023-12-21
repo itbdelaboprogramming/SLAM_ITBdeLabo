@@ -18,6 +18,7 @@ git clone https://github.com/Slamtec/rplidar_ros.git
 cd ~/catkin_ws
 catkin_make
 ```
+4. for slam_itbdelabo package, fill the config file from `config/slam.yaml`.
 
 # Preparation
 1. Choose the local network of your machine that you want to connect. If you are using ZeroTier, find your robot machine IP address in ZeroTier network.
