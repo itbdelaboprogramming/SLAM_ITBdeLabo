@@ -8,4 +8,5 @@ sudo apt-get install -y ros-noetic-move-base ros-noetic-dwa-local-planner ros-no
 sudo apt-get install -y ros-noetic-topic-tools ros-noetic-explore-lite ros-noetic-tf2-tools
 sudo apt-get install -y ros-noetic-map-server
 sudo apt-get install -y ros-noetic-rosbridge-server
+sudo apt-get install -y ros-noetic-turtlebot3 ros-noetic-turtlebot3-msgs ros-noetic-turtlebot3-simulations
 pip install paho-mqtt

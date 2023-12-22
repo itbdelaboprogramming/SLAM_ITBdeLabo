@@ -1,8 +1,9 @@
-compute_period: 20        # ms
-max_speed_linear: 0.33    # m/s (max: 0.33 m/s)
-max_speed_angular: 1.75    # rad/s (max: 3.0 rad/s)
-wheel_radius: 2.75        # cm (current prototype's wheel has diameter of 5.5 cm approximately)
-wheel_distance: 23.0      # cm
-view_degrees: 45.0        # deg
-distance_threshold: 0.7   # m
-mqtt_broker_ip: ""
+slam_node:
+  compute_period: 20        # ms
+  max_speed_linear: 0.33    # m/s (max: 0.33 m/s)
+  max_speed_angular: 1.75    # rad/s (max: 3.0 rad/s)
+  wheel_radius: 2.75        # cm (current prototype's wheel has diameter of 5.5 cm approximately)
+  wheel_distance: 23.0      # cm
+  view_degrees: 45.0        # deg
+  distance_threshold: 0.7   # m
+  mqtt_broker_ip: ""

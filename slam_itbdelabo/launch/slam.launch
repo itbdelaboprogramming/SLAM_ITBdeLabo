@@ -1,10 +1,36 @@
 <?xml version="1.0"?>
 <launch>
-    <include file="$(find slam_itbdelabo)/launch/irbot_rplidar.launch"/>
-    <node pkg="slam_itbdelabo" type="slam_node.py" name="slam_node" respawn="true" output="screen"></node>
-    <node pkg="rosserial_python" type="serial_node.py" name="serial_node" respawn="true" output="screen">
-        <param name="port" value="/dev/ttyUSB1"/>
-        <param name="baud" value="57600"/>
+    <arg name="use_simulator" default="false"/>
+    <arg name="model" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
+
+    <group if="$(arg use_simulator)">
+        <arg name="x_pos" default="-3.0"/>
+        <arg name="y_pos" default="1.0"/>
+        <arg name="z_pos" default="0.0"/>
+        <include file="$(find gazebo_ros)/launch/empty_world.launch">
+            <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/turtlebot3_house.world"/>
+            <arg name="paused" value="false"/>
+            <arg name="use_sim_time" value="true"/>
+            <arg name="gui" value="true"/>
+            <arg name="headless" value="false"/>
+            <arg name="debug" value="false"/>
+        </include>
+        <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+        <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model turtlebot3 -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+    </group>
+
+    <group unless="$(arg use_simulator)">
+        <include file="$(find slam_itbdelabo)/launch/irbot_rplidar.launch"/>
+        <node pkg="rosserial_python" type="serial_node.py" name="serial_node" respawn="true" output="screen">
+            <param name="port" value="/dev/ttyUSB1"/>
+            <param name="baud" value="57600"/>
+        </node>
+    </group>
+
+    <node pkg="slam_itbdelabo" type="slam_node.py" name="slam_node" respawn="true" output="screen">
+        <param name="use_simulator" value="$(arg use_simulator)" />
+        <param name="model_name" value="$(arg model)" />
     </node>
+
     <rosparam command="load" file="$(find slam_itbdelabo)/config/slam.yaml" />
 </launch>
