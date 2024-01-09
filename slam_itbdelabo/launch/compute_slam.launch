@@ -1,5 +1,4 @@
 <launch>
-    <arg name="use_own_map" default="false"/>
     <arg name="use_simulator" default="false"/>
     
     <group if="$(arg use_simulator)">

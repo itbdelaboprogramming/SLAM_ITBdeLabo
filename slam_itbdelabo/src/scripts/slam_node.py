@@ -16,7 +16,9 @@ import json
 start_mapping = False
 stop_mapping = False
 pause_mapping = False
+start_navigation = False
 compute_slam_process = None
+compute_nav_process = None
 vx = 0.0
 wz = 0.0
 
@@ -64,16 +66,31 @@ def scan_callback(msg: LaserScan):
     np_left_filtered = np.array(left_filtered_arr)
     right_obs = np.any(np_right_filtered <= distance_threshold)
     left_obs = np.any(np_left_filtered <= distance_threshold)
-    if left_obs:
+    if start_mapping and not start_navigation:
+        if left_obs:
+            vx = 0.0
+            wz = 1.0
+        elif right_obs:
+            vx = 0.0
+            wz = -1.0
+        else:
+            vx = 0.10
+            wz = 0.0
+    elif not start_mapping and not start_navigation:
         vx = 0.0
-        wz = 1.0
-    elif right_obs:
-        vx = 0.0
-        wz = -1.0
-    else:
-        vx = 0.10
         wz = 0.0
 scan_sub = rospy.Subscriber("scan", LaserScan, scan_callback)
+
+def cmd_vel_callback(msg: Twist):
+    global vx
+    global wz
+    if start_navigation and not start_mapping:
+        vx = msg.linear.x
+        wz = msg.angular.z
+    elif not start_navigation and not start_mapping:
+        vx = 0.0
+        wz = 0.0
+cmd_vel_sub = rospy.Subscriber("cmd_vel", Twist, cmd_vel_callback)
 
 # MQTT Set Up
 def on_connect(client, userdata, flags, rc):
@@ -85,7 +102,9 @@ def on_message(client, userdata, msg):
     global start_mapping
     global pause_mapping
     global stop_mapping
+    global start_navigation
     global compute_slam_process
+    global compute_nav_process
     if msg.topic == "/mapping":
         payload = int(msg.payload)
         if payload == 1:
@@ -108,15 +127,20 @@ def on_message(client, userdata, msg):
         data = json.loads(msg.payload.decode("utf-8"))
         enable = bool(data["enable"])
         use_own_map = bool(data["use_own_map"])
-        if enable and compute_slam_process is None:
+        if enable and compute_slam_process is None and compute_nav_process is None:
             if use_own_map:
-                print("Launching compute_slam with own map")
-                compute_slam_process = subprocess.Popen(["roslaunch", "slam_itbdelabo", "compute_slam.launch", "use_own_map:=true"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                print("Launching compute nav")
+                start_navigation = True
+                compute_nav_process = subprocess.Popen(["roslaunch", "slam_itbdelabo", "compute_nav.launch", f"use_simulator:={use_simulator}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             else:
                 print("Launching compute slam")
                 compute_slam_process = subprocess.Popen(["roslaunch", "slam_itbdelabo", "compute_slam.launch", f"use_simulator:={use_simulator}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        elif not enable and compute_slam_process is not None:
-            os.killpg(os.getpgid(compute_slam_process.pid), signal.SIGTERM)
+        elif not enable:
+            if compute_slam_process is not None:
+                os.killpg(os.getpgid(compute_slam_process.pid), signal.SIGTERM)
+            if compute_nav_process is not None:
+                start_navigation = False
+                os.killpg(os.getpgid(compute_nav_process.pid), signal.SIGTERM)
         
 mqtt_client = mqtt.Client(client_id=f"slam_node_${random.randint(0,1000)}")
 mqtt_client.on_connect = on_connect
@@ -131,40 +155,33 @@ rate = rospy.Rate(frequency)
 
 while not rospy.is_shutdown():
     hardware_command_msg = HardwareCommand()
-    twist_msg = Twist()
-    # print(f"start_mapping: {start_mapping}, pause_mapping: {pause_mapping}, stop_mapping: {stop_mapping}")
-    if start_mapping:
-    	# inverse kinematics
-        vx = constrain(vx, -max_speed_linear, max_speed_linear)
-        wz = constrain(wz, -max_speed_angular, max_speed_angular)
-        hardware_command_msg.right_motor_speed = (vx*100.0/wheel_radius - wz*wheel_distance/(2.0*wheel_radius))*9.55
-        hardware_command_msg.left_motor_speed = (vx*100.0/wheel_radius + wz*wheel_distance/(2.0*wheel_radius))*9.55
-        twist_msg.linear.x = vx
-        twist_msg.angular.z = wz
-    else:
-        hardware_command_msg.right_motor_speed = 0.0
-        hardware_command_msg.left_motor_speed = 0.0
-        twist_msg.linear.x = 0.0
-        twist_msg.angular.z = 0.0
-
-    
+    cmd_vel_msg = Twist()
     # convention, rot_vel (+) -> clockwise (navigation/compass-based)
-    if start_mapping:
-        if vx > 0 :
-            # forward
-            hardware_command_msg.movement_command = 3
-        elif wz < 0:
-            # left
-            hardware_command_msg.movement_command = 2 
-        elif wz > 0:
-            # right
-            hardware_command_msg.movement_command = 1 
+    # inverse kinematics
+    vx = constrain(vx, -max_speed_linear, max_speed_linear)
+    wz = constrain(wz, -max_speed_angular, max_speed_angular)
+    hardware_command_msg.right_motor_speed = (vx*100.0/wheel_radius - wz*wheel_distance/(2.0*wheel_radius))*9.55
+    hardware_command_msg.left_motor_speed = (vx*100.0/wheel_radius + wz*wheel_distance/(2.0*wheel_radius))*9.55
+    if vx > 0 :
+        # forward
+        hardware_command_msg.movement_command = 3
+    elif wz < 0:
+        # left
+        hardware_command_msg.movement_command = 2 
+    elif wz > 0:
+        # right
+        hardware_command_msg.movement_command = 1
     else:
         # stop
         hardware_command_msg.movement_command = 0
-    
+
+    # for SLAM simulator mapping
+    if  not start_navigation:
+        cmd_vel_msg.linear.x = vx
+        cmd_vel_msg.angular.z = wz
+        cmd_vel_pub.publish(cmd_vel_msg)
+
     hardware_command_pub.publish(hardware_command_msg)
-    cmd_vel_pub.publish(twist_msg)
     mqtt_client.loop(timeout=compute_period/1000)
     
     rate.sleep()
