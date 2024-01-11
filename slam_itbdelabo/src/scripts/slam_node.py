@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# Import Python Libraries
 import rospy
 from slam_itbdelabo.msg import HardwareCommand
 from sensor_msgs.msg import LaserScan
@@ -42,10 +43,11 @@ camera_width = rospy.get_param("/slam_node/camera_width")
 camera_height = rospy.get_param("/slam_node/camera_height")
 camera_quality = rospy.get_param("/slam_node/camera_quality")
 
-# Create ROS Publisher
+# Create ROS Publishers
 hardware_command_pub = rospy.Publisher('hardware_command', HardwareCommand, queue_size=1)
 cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
+# Create ROS Subscribers
 def Angle2Index(laser_scan_msg, angle):
     return (int)((angle-laser_scan_msg.angle_min)/laser_scan_msg.angle_increment)
 def Index2Angle(laser_scan_msg, index):
@@ -152,9 +154,11 @@ mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 mqtt_client.connect(mqtt_broker_ip, 1883, 60)
 
+# Utility Function
 def constrain(val, min_val, max_val):
     return min(max_val, max(min_val, val))
 
+# Main Loop Setup
 frequency = (1/compute_period) * 1000
 rate = rospy.Rate(frequency)
 cap = cv2.VideoCapture(camera_id)
@@ -162,16 +166,16 @@ if not cap.isOpened():
     print("Error: Could not open camera.")
     exit()
 
+# Main Loop
 while not rospy.is_shutdown():
     """convention, rot_vel (+) -> clockwise (navigation/compass-based)"""
     # read camera frame
     ret, frame = cap.read()
     if ret:
         compressed_frame = cv2.resize(frame, (camera_width, camera_height))
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), camera_quality]
-        _, encoded_frame = cv2.imencode('.jpg', compressed_frame, encode_param)
-        compressed_frame_bytes = encoded_frame.tobytes()
-        mqtt_client.publish('/camera', compressed_frame_bytes, qos=0, retain=False)
+        _, compressed_frame_encoded = cv2.imencode('.jpg', compressed_frame, [int(cv2.IMWRITE_JPEG_QUALITY), camera_quality])
+        compressed_frame_bytes = compressed_frame_encoded.tobytes()
+        mqtt_client.publish('/camera', compressed_frame_bytes)
 
     # create msg variables
     hardware_command_msg = HardwareCommand()
