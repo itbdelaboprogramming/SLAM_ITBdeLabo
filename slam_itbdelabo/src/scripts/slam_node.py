@@ -11,6 +11,7 @@ import math
 import paho.mqtt.client as mqtt
 import random
 import json
+import cv2
 
 # Global Variables
 start_mapping = False
@@ -36,6 +37,10 @@ distance_threshold = rospy.get_param("/slam_node/distance_threshold")
 mqtt_broker_ip = rospy.get_param("/slam_node/mqtt_broker_ip")
 use_simulator = bool(rospy.get_param("/slam_node/use_simulator"))
 model_name = rospy.get_param("/slam_node/model_name")
+camera_id = rospy.get_param("/slam_node/camera_id")
+camera_width = rospy.get_param("/slam_node/camera_width")
+camera_height = rospy.get_param("/slam_node/camera_height")
+camera_quality = rospy.get_param("/slam_node/camera_quality")
 
 # Create ROS Publisher
 hardware_command_pub = rospy.Publisher('hardware_command', HardwareCommand, queue_size=1)
@@ -94,9 +99,9 @@ cmd_vel_sub = rospy.Subscriber("cmd_vel", Twist, cmd_vel_callback)
 
 # MQTT Set Up
 def on_connect(client, userdata, flags, rc):
-    print(f"Connected with MQTT Broker at {mqtt_broker_ip}")
     client.subscribe("/mapping")
     client.subscribe("/lidar")
+    rospy.loginfo(f"Connected with MQTT Broker at {mqtt_broker_ip}")
 
 def on_message(client, userdata, msg):
     global start_mapping
@@ -129,11 +134,11 @@ def on_message(client, userdata, msg):
         use_own_map = bool(data["use_own_map"])
         if enable and compute_slam_process is None and compute_nav_process is None:
             if use_own_map:
-                print("Launching compute nav")
+                rospy.loginfo("Launching compute nav")
                 start_navigation = True
                 compute_nav_process = subprocess.Popen(["roslaunch", "slam_itbdelabo", "compute_nav.launch", f"use_simulator:={use_simulator}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             else:
-                print("Launching compute slam")
+                rospy.loginfo("Launching compute slam")
                 compute_slam_process = subprocess.Popen(["roslaunch", "slam_itbdelabo", "compute_slam.launch", f"use_simulator:={use_simulator}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         elif not enable:
             if compute_slam_process is not None:
@@ -152,11 +157,26 @@ def constrain(val, min_val, max_val):
 
 frequency = (1/compute_period) * 1000
 rate = rospy.Rate(frequency)
+cap = cv2.VideoCapture(camera_id)
+if not cap.isOpened():
+    print("Error: Could not open camera.")
+    exit()
 
 while not rospy.is_shutdown():
+    """convention, rot_vel (+) -> clockwise (navigation/compass-based)"""
+    # read camera frame
+    ret, frame = cap.read()
+    if ret:
+        compressed_frame = cv2.resize(frame, (camera_width, camera_height))
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), camera_quality]
+        _, encoded_frame = cv2.imencode('.jpg', compressed_frame, encode_param)
+        compressed_frame_bytes = encoded_frame.tobytes()
+        mqtt_client.publish('/camera', compressed_frame_bytes, qos=0, retain=False)
+
+    # create msg variables
     hardware_command_msg = HardwareCommand()
     cmd_vel_msg = Twist()
-    # convention, rot_vel (+) -> clockwise (navigation/compass-based)
+    
     # inverse kinematics
     vx = constrain(vx, -max_speed_linear, max_speed_linear)
     wz = constrain(wz, -max_speed_angular, max_speed_angular)
