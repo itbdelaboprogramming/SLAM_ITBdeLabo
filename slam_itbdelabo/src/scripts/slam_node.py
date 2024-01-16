@@ -2,7 +2,7 @@
 
 # Import Python Libraries
 import rospy
-from slam_itbdelabo.msg import HardwareCommand
+from ros_msd700_msgs.msg import HardwareCommand, HardwareState
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 import subprocess

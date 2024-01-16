@@ -18,7 +18,15 @@ git clone https://github.com/Slamtec/rplidar_ros.git
 cd ~/catkin_ws
 catkin_make
 ```
-4. for slam_itbdelabo package, fill the config file from `config/slam.yaml`.
+4. Install msg & srv definition
+```bash
+cd ~/catkin_ws/src
+git clone https://github.com/itbdelaboprogramming/ros_msd700_msgs.git
+cd ~/catkin_ws
+catkin_make
+```
+5. for slam_itbdelabo package, fill the config file from `config/slam.yaml`.
+6. Refer to this [link](https://github.com/itbdelaboprogramming/firmware-msd700) for MSD700 microcontroller firmware.
 
 # Preparation
 1. Choose the local network of your machine that you want to connect. If you are using ZeroTier, find your robot machine IP address in ZeroTier network.
