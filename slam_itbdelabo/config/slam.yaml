@@ -6,7 +6,7 @@ slam_node:
   wheel_distance: 23.0      # cm
   view_degrees: 45.0        # deg
   distance_threshold: 0.7   # m
-  camera_id: 0              # camera id for opencv
+  camera_id: 4              # camera id for opencv
   camera_width: 320         # camera width
   camera_height: 240        # camera height
   camera_quality: 10        # image quality compression to send over mqtt (0-100)
