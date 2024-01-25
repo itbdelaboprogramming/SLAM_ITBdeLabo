@@ -3,8 +3,9 @@
 # Import Python Libraries
 import rospy
 from ros_msd700_msgs.msg import HardwareCommand, HardwareState
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import LaserScan, Image
 from geometry_msgs.msg import Twist
+from cv_bridge import CvBridge
 import subprocess
 import os, signal
 import numpy as np
@@ -99,6 +100,14 @@ def cmd_vel_callback(msg: Twist):
         wz = 0.0
 cmd_vel_sub = rospy.Subscriber("cmd_vel", Twist, cmd_vel_callback)
 
+frame_sim = None
+def image_callback(msg):
+    global frame_sim
+    bridge = CvBridge()
+    frame_sim = bridge.imgmsg_to_cv2(msg, "bgr8")
+if use_simulator:
+    camera_sim_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, image_callback)
+
 # MQTT Set Up
 def on_connect(client, userdata, flags, rc):
     client.subscribe("/mapping")
@@ -161,16 +170,16 @@ def constrain(val, min_val, max_val):
 # Main Loop Setup
 frequency = (1/compute_period) * 1000
 rate = rospy.Rate(frequency)
-cap = cv2.VideoCapture(camera_id)
-if not cap.isOpened():
-    print("Error: Could not open camera.")
-    exit()
+cap = cv2.VideoCapture(camera_id) if not use_simulator else None
 
 # Main Loop
 while not rospy.is_shutdown():
     """convention, rot_vel (+) -> clockwise (navigation/compass-based)"""
     # read camera frame
-    ret, frame = cap.read()
+    if use_simulator:
+        ret, frame = frame_sim is not None, frame_sim
+    else:
+        ret, frame = cap.read()
     if ret:
         compressed_frame = cv2.resize(frame, (camera_width, camera_height))
         _, compressed_frame_encoded = cv2.imencode('.jpg', compressed_frame, [int(cv2.IMWRITE_JPEG_QUALITY), camera_quality])

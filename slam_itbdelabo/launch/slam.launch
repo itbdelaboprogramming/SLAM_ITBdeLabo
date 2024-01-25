@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <arg name="use_simulator" default="false"/>
-    <arg name="model" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
+    <arg name="model" default="waffle" doc="model type [burger, waffle, waffle_pi]"/>
 
     <group if="$(arg use_simulator)">
         <arg name="x_pos" default="-3.0"/>

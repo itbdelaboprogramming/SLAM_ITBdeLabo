@@ -2,7 +2,7 @@
   <arg name="use_simulator" default="false"/>
 
   <group if="$(arg use_simulator)">
-    <arg name="model" default="burger" doc="model type [burger, waffle, waffle_pi]"/>
+    <arg name="model" default="waffle" doc="model type [burger, waffle, waffle_pi]"/>
     <arg name="open_rviz" default="true"/>
     <arg name="move_forward_only" default="false"/>
     <arg name="cmd_vel_topic" default="/cmd_vel" />

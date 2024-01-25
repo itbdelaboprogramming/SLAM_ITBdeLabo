@@ -4,10 +4,10 @@ slam_node:
   max_speed_angular: 1.75    # rad/s (max: 3.0 rad/s)
   wheel_radius: 2.75        # cm (current prototype's wheel has diameter of 5.5 cm approximately)
   wheel_distance: 23.0      # cm
-  view_degrees: 45.0        # deg
+  view_degrees: 90.0        # deg
   distance_threshold: 0.7   # m
   camera_id: 4              # camera id for opencv
-  camera_width: 320         # camera width
-  camera_height: 240        # camera height
+  camera_width: 240         # camera width
+  camera_height: 170        # camera height
   camera_quality: 10        # image quality compression to send over mqtt (0-100)
   mqtt_broker_ip: ""
