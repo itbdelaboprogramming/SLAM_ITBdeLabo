@@ -2,6 +2,7 @@
 
 # Import Python Libraries
 import rospy
+import cv2
 from ros_msd700_msgs.msg import HardwareCommand, HardwareState
 from sensor_msgs.msg import LaserScan, Image
 from geometry_msgs.msg import Twist
@@ -13,7 +14,6 @@ import math
 import paho.mqtt.client as mqtt
 import random
 import json
-import cv2
 
 # Global Variables
 start_mapping = False
