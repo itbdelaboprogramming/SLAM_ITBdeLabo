@@ -39,6 +39,7 @@ model_name = rospy.get_param("/slam_node/model_name")
 # Global Variables
 mapping_topic = f"{username}/{unit_name}/mapping"
 lidar_topic = f"{username}/{unit_name}/lidar"
+camera_topic = f"{username}/{unit_name}/camera"
 start_mapping = False
 stop_mapping = False
 pause_mapping = False
@@ -189,7 +190,7 @@ while not rospy.is_shutdown():
         compressed_frame = cv2.resize(frame, (camera_width, camera_height))
         _, compressed_frame_encoded = cv2.imencode('.jpg', compressed_frame, [int(cv2.IMWRITE_JPEG_QUALITY), camera_quality])
         compressed_frame_bytes = compressed_frame_encoded.tobytes()
-        mqtt_client.publish('/camera', compressed_frame_bytes)
+        mqtt_client.publish(camera_topic, compressed_frame_bytes)
 
     # create msg variables
     hardware_command_msg = HardwareCommand()
