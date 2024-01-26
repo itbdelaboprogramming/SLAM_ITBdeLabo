@@ -10,4 +10,6 @@ slam_node:
   camera_width: 240         # camera width
   camera_height: 170        # camera height
   camera_quality: 10        # image quality compression to send over mqtt (0-100)
+  username: "itbdelabo"     # username from web interface
+  unit_name: "Unit A"       # registered unit name from web interface
   mqtt_broker_ip: ""

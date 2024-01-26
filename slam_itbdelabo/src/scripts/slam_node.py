@@ -15,16 +15,6 @@ import paho.mqtt.client as mqtt
 import random
 import json
 
-# Global Variables
-start_mapping = False
-stop_mapping = False
-pause_mapping = False
-start_navigation = False
-compute_slam_process = None
-compute_nav_process = None
-vx = 0.0
-wz = 0.0
-
 # Initialize ROS Node
 rospy.init_node('slam_node')
 
@@ -36,13 +26,28 @@ wheel_radius = rospy.get_param("/slam_node/wheel_radius")		# in cm
 wheel_distance = rospy.get_param("/slam_node/wheel_distance")		# in cm
 view_degrees = rospy.get_param("/slam_node/view_degrees")
 distance_threshold = rospy.get_param("/slam_node/distance_threshold")
-mqtt_broker_ip = rospy.get_param("/slam_node/mqtt_broker_ip")
-use_simulator = bool(rospy.get_param("/slam_node/use_simulator"))
-model_name = rospy.get_param("/slam_node/model_name")
 camera_id = rospy.get_param("/slam_node/camera_id")
 camera_width = rospy.get_param("/slam_node/camera_width")
 camera_height = rospy.get_param("/slam_node/camera_height")
 camera_quality = rospy.get_param("/slam_node/camera_quality")
+username = rospy.get_param("/slam_node/username")
+unit_name = rospy.get_param("/slam_node/unit_name")
+mqtt_broker_ip = rospy.get_param("/slam_node/mqtt_broker_ip")
+use_simulator = bool(rospy.get_param("/slam_node/use_simulator"))
+model_name = rospy.get_param("/slam_node/model_name") 
+
+# Global Variables
+mapping_topic = f"{username}/{unit_name}/mapping"
+lidar_topic = f"{username}/{unit_name}/lidar"
+start_mapping = False
+stop_mapping = False
+pause_mapping = False
+start_navigation = False
+compute_slam_process = None
+compute_nav_process = None
+vx = 0.0
+wz = 0.0
+
 
 # Create ROS Publishers
 hardware_command_pub = rospy.Publisher('hardware_command', HardwareCommand, queue_size=1)
@@ -110,8 +115,8 @@ if use_simulator:
 
 # MQTT Set Up
 def on_connect(client, userdata, flags, rc):
-    client.subscribe("/mapping")
-    client.subscribe("/lidar")
+    client.subscribe(mapping_topic)
+    client.subscribe(lidar_topic)
     rospy.loginfo(f"Connected with MQTT Broker at {mqtt_broker_ip}")
 
 def on_message(client, userdata, msg):
@@ -121,7 +126,7 @@ def on_message(client, userdata, msg):
     global start_navigation
     global compute_slam_process
     global compute_nav_process
-    if msg.topic == "/mapping":
+    if msg.topic == mapping_topic:
         payload = int(msg.payload)
         if payload == 1:
             start_mapping = True
@@ -139,7 +144,7 @@ def on_message(client, userdata, msg):
             start_mapping = False
             pause_mapping = False
             stop_mapping = False
-    elif msg.topic == "/lidar":
+    elif msg.topic == lidar_topic:
         data = json.loads(msg.payload.decode("utf-8"))
         enable = bool(data["enable"])
         use_own_map = bool(data["use_own_map"])
