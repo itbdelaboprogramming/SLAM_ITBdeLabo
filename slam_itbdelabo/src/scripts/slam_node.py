@@ -235,5 +235,5 @@ try:
         mqtt_client.loop(timeout=compute_period/1000)
         
         rate.sleep()
-except rospy.ROSInterruptException:
+except:
     pass
