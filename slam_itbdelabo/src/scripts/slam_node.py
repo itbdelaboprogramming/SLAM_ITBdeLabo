@@ -37,6 +37,9 @@ use_simulator = bool(rospy.get_param("/slam_node/use_simulator"))
 model_name = rospy.get_param("/slam_node/model_name") 
 
 # Global Variables
+ch_ultrasonic_distances = []
+right_motor_pulse_delta = 0
+left_motor_pulse_delta = 0
 mapping_topic = f"{username}/{unit_name}/mapping"
 lidar_topic = f"{username}/{unit_name}/lidar"
 camera_topic = f"{username}/{unit_name}/camera"
@@ -55,6 +58,13 @@ hardware_command_pub = rospy.Publisher('hardware_command', HardwareCommand, queu
 cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
 # Create ROS Subscribers
+def hardware_state_callback(msg: HardwareState):
+    global ch_ultrasonic_distances, right_motor_pulse_delta, left_motor_pulse_delta
+    ch_ultrasonic_distances = msg.ch_ultrasonic_distances
+    right_motor_pulse_delta = msg.right_motor_pulse_delta
+    left_motor_pulse_delta = msg.left_motor_pulse_delta
+hardware_state_sub = rospy.Subscriber("hardware_state", HardwareState, hardware_state_callback)
+
 def Angle2Index(laser_scan_msg, angle):
     return (int)((angle-laser_scan_msg.angle_min)/laser_scan_msg.angle_increment)
 def Index2Angle(laser_scan_msg, index):
@@ -179,48 +189,51 @@ rate = rospy.Rate(frequency)
 cap = cv2.VideoCapture(camera_id) if not use_simulator else None
 
 # Main Loop
-while not rospy.is_shutdown():
-    """convention, rot_vel (+) -> clockwise (navigation/compass-based)"""
-    # read camera frame
-    if use_simulator:
-        ret, frame = frame_sim is not None, frame_sim
-    else:
-        ret, frame = cap.read()
-    if ret:
-        compressed_frame = cv2.resize(frame, (camera_width, camera_height))
-        _, compressed_frame_encoded = cv2.imencode('.jpg', compressed_frame, [int(cv2.IMWRITE_JPEG_QUALITY), camera_quality])
-        compressed_frame_bytes = compressed_frame_encoded.tobytes()
-        mqtt_client.publish(camera_topic, compressed_frame_bytes)
+try:
+    while not rospy.is_shutdown():
+        """convention, rot_vel (+) -> clockwise (navigation/compass-based)"""
+        # read camera frame
+        if use_simulator:
+            ret, frame = frame_sim is not None, frame_sim
+        else:
+            ret, frame = cap.read()
+        if ret:
+            compressed_frame = cv2.resize(frame, (camera_width, camera_height))
+            _, compressed_frame_encoded = cv2.imencode('.jpg', compressed_frame, [int(cv2.IMWRITE_JPEG_QUALITY), camera_quality])
+            compressed_frame_bytes = compressed_frame_encoded.tobytes()
+            mqtt_client.publish(camera_topic, compressed_frame_bytes)
 
-    # create msg variables
-    hardware_command_msg = HardwareCommand()
-    cmd_vel_msg = Twist()
-    
-    # inverse kinematics
-    vx = constrain(vx, -max_speed_linear, max_speed_linear)
-    wz = constrain(wz, -max_speed_angular, max_speed_angular)
-    hardware_command_msg.right_motor_speed = (vx*100.0/wheel_radius - wz*wheel_distance/(2.0*wheel_radius))*9.55
-    hardware_command_msg.left_motor_speed = (vx*100.0/wheel_radius + wz*wheel_distance/(2.0*wheel_radius))*9.55
-    if vx > 0 :
-        # forward
-        hardware_command_msg.movement_command = 3
-    elif wz < 0:
-        # left
-        hardware_command_msg.movement_command = 2 
-    elif wz > 0:
-        # right
-        hardware_command_msg.movement_command = 1
-    else:
-        # stop
-        hardware_command_msg.movement_command = 0
+        # create msg variables
+        hardware_command_msg = HardwareCommand()
+        cmd_vel_msg = Twist()
+        
+        # inverse kinematics
+        vx = constrain(vx, -max_speed_linear, max_speed_linear)
+        wz = constrain(wz, -max_speed_angular, max_speed_angular)
+        hardware_command_msg.right_motor_speed = (vx*100.0/wheel_radius - wz*wheel_distance/(2.0*wheel_radius))*9.55
+        hardware_command_msg.left_motor_speed = (vx*100.0/wheel_radius + wz*wheel_distance/(2.0*wheel_radius))*9.55
+        if vx > 0 :
+            # forward
+            hardware_command_msg.movement_command = 3
+        elif wz < 0:
+            # left
+            hardware_command_msg.movement_command = 2 
+        elif wz > 0:
+            # right
+            hardware_command_msg.movement_command = 1
+        else:
+            # stop
+            hardware_command_msg.movement_command = 0
 
-    # for SLAM simulator mapping
-    if  not start_navigation:
-        cmd_vel_msg.linear.x = vx
-        cmd_vel_msg.angular.z = wz
-        cmd_vel_pub.publish(cmd_vel_msg)
+        # for SLAM simulator mapping
+        if  not start_navigation:
+            cmd_vel_msg.linear.x = vx
+            cmd_vel_msg.angular.z = wz
+            cmd_vel_pub.publish(cmd_vel_msg)
 
-    hardware_command_pub.publish(hardware_command_msg)
-    mqtt_client.loop(timeout=compute_period/1000)
-    
-    rate.sleep()
+        hardware_command_pub.publish(hardware_command_msg)
+        mqtt_client.loop(timeout=compute_period/1000)
+        
+        rate.sleep()
+except rospy.ROSInterruptException:
+    pass
