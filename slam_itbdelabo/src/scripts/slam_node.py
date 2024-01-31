@@ -3,9 +3,11 @@
 # Import Python Libraries
 import rospy
 import cv2
+import tf
 from ros_msd700_msgs.msg import HardwareCommand, HardwareState
 from sensor_msgs.msg import LaserScan, Image
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Pose, Point, Quaternion
+from nav_msgs.msg import Odometry
 from cv_bridge import CvBridge
 import subprocess
 import os, signal
@@ -19,22 +21,24 @@ import json
 rospy.init_node('slam_node')
 
 # Get ROS Parameters (loaded from slam.yaml)
-compute_period = rospy.get_param("/slam_node/compute_period")
-max_speed_linear = rospy.get_param("/slam_node/max_speed_linear")
-max_speed_angular = rospy.get_param("/slam_node/max_speed_angular")
-wheel_radius = rospy.get_param("/slam_node/wheel_radius")		# in cm
-wheel_distance = rospy.get_param("/slam_node/wheel_distance")		# in cm
-view_degrees = rospy.get_param("/slam_node/view_degrees")
-distance_threshold = rospy.get_param("/slam_node/distance_threshold")
+compute_period = rospy.get_param("/slam_node/compute_period", 20)
+max_speed_linear = rospy.get_param("/slam_node/max_speed_linear", 0.33)
+max_speed_angular = rospy.get_param("/slam_node/max_speed_angular", 1.75)
+wheel_radius = rospy.get_param("/slam_node/wheel_radius", 2.75)	  # in cm
+wheel_distance = rospy.get_param("/slam_node/wheel_distance", 23.0)    # in cm
+gear_ratio = rospy.get_param("/slam_node/gear_ratio", 1980.0)
+use_imu = rospy.get_param("/slam_node/use_imu", 0)
+view_degrees = rospy.get_param("/slam_node/view_degrees", 90.0)
+distance_threshold = rospy.get_param("/slam_node/distance_threshold", 0.7)
 camera_id = rospy.get_param("/slam_node/camera_id")
 camera_width = rospy.get_param("/slam_node/camera_width")
 camera_height = rospy.get_param("/slam_node/camera_height")
 camera_quality = rospy.get_param("/slam_node/camera_quality")
-username = rospy.get_param("/slam_node/username")
-unit_name = rospy.get_param("/slam_node/unit_name")
+username = rospy.get_param("/slam_node/username","itbdelabo")
+unit_name = rospy.get_param("/slam_node/unit_name","Unit A")
 mqtt_broker_ip = rospy.get_param("/slam_node/mqtt_broker_ip")
 use_simulator = bool(rospy.get_param("/slam_node/use_simulator"))
-model_name = rospy.get_param("/slam_node/model_name") 
+model_name = rospy.get_param("/slam_node/model_name","") 
 
 # Global Variables
 ch_ultrasonic_distances = []
@@ -51,11 +55,23 @@ compute_slam_process = None
 compute_nav_process = None
 vx = 0.0
 wz = 0.0
-
+pose_x = 0.0
+pose_y = 0.0
+theta = 0.0
+heading = 0.0
 
 # Create ROS Publishers
 hardware_command_pub = rospy.Publisher('hardware_command', HardwareCommand, queue_size=1)
 cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+odom_pub = rospy.Publisher('wheel/odom', Odometry, queue_size=1)
+
+def warpAngle(angle):
+    if angle >= 6.28318531:
+        return warpAngle(angle - 6.28318531)
+    elif angle < 0:
+        return warpAngle(angle + 6.28318531)
+    else:
+        return angle
 
 # Create ROS Subscribers
 def hardware_state_callback(msg: HardwareState):
@@ -63,6 +79,7 @@ def hardware_state_callback(msg: HardwareState):
     ch_ultrasonic_distances = msg.ch_ultrasonic_distances
     right_motor_pulse_delta = msg.right_motor_pulse_delta
     left_motor_pulse_delta = msg.left_motor_pulse_delta
+    heading = msg.heading
 hardware_state_sub = rospy.Subscriber("hardware_state", HardwareState, hardware_state_callback)
 
 def Angle2Index(laser_scan_msg, angle):
@@ -206,6 +223,7 @@ try:
         # create msg variables
         hardware_command_msg = HardwareCommand()
         cmd_vel_msg = Twist()
+        odom_msg = Odometry()
         
         # inverse kinematics
         vx = constrain(vx, -max_speed_linear, max_speed_linear)
@@ -231,6 +249,27 @@ try:
             cmd_vel_msg.angular.z = wz
             cmd_vel_pub.publish(cmd_vel_msg)
 
+        delta_right_angle = right_motor_pulse_delta/gear_ratio*6.28318531
+        delta_left_angle = left_motor_pulse_delta/gear_ratio*6.28318531
+
+        # Calculate robot poses based on wheel odometry
+        pose_x = pose_x + wheel_radius/2.0 * (delta_right_angle + delta_left_angle) * math.sin(theta);
+        pose_y = pose_y + wheel_radius/2.0 * (delta_right_angle + delta_left_angle) * math.cos(theta);
+        if not use_imu:
+            theta = theta + (delta_right_angle - delta_left_angle) * wheel_radius/wheel_distance;
+            theta = warpAngle(theta)
+        else:
+            theta = heading
+        
+        #Assign odometry msg
+        odom_msg.header.stamp = rospy.Time.now() 
+        odom_msg.header.frame_id = "odom"
+        odom_msg.child_frame_id = "base_footprint"
+
+        odom_msg.pose.pose.position = Point(float(pose_x), float(pose_y), 0.0)
+        odom_msg.pose.pose.orientation = Quaternion(*tf.transformations.quaternion_from_euler(0.0, 0.0, theta))
+           
+        odom_pub.publish(odom_msg)
         hardware_command_pub.publish(hardware_command_msg)
         mqtt_client.loop(timeout=compute_period/1000)
         
