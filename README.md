@@ -12,7 +12,7 @@ sudo chmod +x noetic_dep.sh
 ```
 3. Run `noetic_dep.sh` script and install.
 ```
-sudo ./noetic_dep.sh
+./noetic_dep.sh
 cd ~/catkin_ws/src
 git clone https://github.com/Slamtec/rplidar_ros.git
 cd ~/catkin_ws

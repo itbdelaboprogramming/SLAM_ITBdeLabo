@@ -9,4 +9,5 @@ sudo apt-get install -y ros-noetic-topic-tools ros-noetic-explore-lite ros-noeti
 sudo apt-get install -y ros-noetic-map-server
 sudo apt-get install -y ros-noetic-rosbridge-server
 sudo apt-get install -y ros-noetic-turtlebot3 ros-noetic-turtlebot3-msgs ros-noetic-turtlebot3-simulations
+sudo apt-get install -y ros-noetic-rtabmap ros-noetic-rtabmap-launch ros-noetic-rtabmap-demos ros-noetic-imu-filter-madgwick ros-noetic-realsense2-camera
 pip install paho-mqtt
