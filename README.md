@@ -11,12 +11,19 @@ cd ~/catkin_ws/src/SLAM_ITBdeLabo/install_requires
 sudo chmod +x noetic_dep.sh
 ```
 3. Run `noetic_dep.sh` script and install.
-```
+```bash
 ./noetic_dep.sh
 cd ~/catkin_ws/src
 git clone https://github.com/Slamtec/rplidar_ros.git
 cd ~/catkin_ws
 catkin_make
+cd ~/catkin_ws/src/rplidar_ros/scripts
+./create_udev_rules.sh
+
+# change /dev/ttyUSB0 to /dev/rplidar to launch file for example for RPLidar A1
+sudo nano ~/catkin_ws/src/rplidar_ros/launch/rplidar_a1.launch
+# change /dev/ttyUSB0 to /dev/rplidar
+# ctrl + s and ctrl + x to save and exit respectively
 ```
 4. Install msg & srv definition
 ```bash
