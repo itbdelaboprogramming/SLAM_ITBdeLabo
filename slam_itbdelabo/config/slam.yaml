@@ -5,7 +5,7 @@ slam_node:
   wheel_radius: 2.75        # cm (current prototype's wheel has diameter of 5.5 cm approximately)
   wheel_distance: 23.0      # cm
   gear_ratio: 1980.0
-  use_imu: 0                # set to 1 if you are using IMU as heading
+  use_imu: 1                # set to 1 if you are using IMU as heading
   view_degrees: 90.0        # deg
   distance_threshold: 0.7   # m
   camera_id: 4              # camera id for opencv
