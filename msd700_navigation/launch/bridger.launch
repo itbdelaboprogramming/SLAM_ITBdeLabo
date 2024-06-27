@@ -1,19 +1,18 @@
 <launch>
     <!-- Arguments -->
-    <arg name="slam_methods" default="gmapping" doc="slam type [gmapping, cartographer, hector, karto, frontier_exploration]"/>
-    <arg name="open_rviz" default="true"/>
-    <arg name="model" default="$(find msd_pose_estimation)/urdf/irbot.urdf.xacro"/>
-    <arg name="rvizconfig" default="$(find msd_pose_estimation)/rviz/pose_estimation.rviz" />
-    <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
-    
-    <include file="$(find msd700_navigation)/launch/lidar_scanner.launch"/>
-    <include file="$(find msd_pose_estimation)/launch/robot_localization.launch"/>
-    <include file="$(find msd700_navigation)/launch/msd700_$(arg slam_methods).launch"/>
+    <arg name="move_forward_only" default="false"/>
+
+    <include file="$(find msd700_navigation)/launch/msd700_slam.launch"/>
+    <include file="$(find msd700_navigation)/launch/bridger.launch"/>
   
-    <!-- rviz -->
-    <group if="$(arg open_rviz)"> 
-        <node pkg="rviz" type="rviz" name="rviz" required="true"
-            args="-d $(find msd700_navigation)/rviz/msd700_$(arg slam_methods).rviz"/>
-    </group>
+    <!-- move_base -->
+    <include file="$(find msd700_navigation)/launch/move_base.launch">
+        <arg name="move_forward_only" value="$(arg move_forward_only)"/>
+    </include>
+
+    <!-- exploration -->
+    <include file="$(find explore_lite)/launch/explore.launch" />
+
+
   </launch>
   

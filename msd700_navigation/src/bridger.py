@@ -26,6 +26,18 @@ rospy.init_node('bridger')
 wheel_distance = rospy.get_param("/raw_sensor/wheel_distance", 23.0)    # in cm
 wheel_radius = rospy.get_param("/raw_sensor/wheel_radius", 2.75)	  # in cm
 
+# Initialization
+vx = 0.0
+vy = 0.0
+vz = 0.0
+wx = 0.0
+wy = 0.0
+wz = 0.0
+left_vel = 0.0
+right_vel = 0.0
+
+
+
 # Main loop Setup
 rate = rospy.Rate(100)
 
