@@ -1,4 +1,4 @@
 <launch>
-    <node pkg="msd700_navigation" type="bridger.py" name="bridger_node"/>
+    <node pkg="msd700_navigation" type="bridger.py" name="bridger_node" output="screen"/>
   </launch>
   
