@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="rviz" type="rviz" name="rviz" required="true"
+        args="-d $(find msd700_navigation)/rviz/msd700_$(arg slam_methods).rviz"/>
+</launch>
