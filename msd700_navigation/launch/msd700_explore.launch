@@ -3,7 +3,7 @@
     <!-- <arg name="move_forward_only" default="false"/> -->
 
     <include file="$(find msd700_navigation)/launch/msd700_slam.launch"/>
-    <!-- <include file="$(find msd700_navigation)/launch/primitive/bridger.launch"/> -->
+    <include file="$(find msd700_navigation)/launch/primitive/bridger.launch"/>
   
     <!-- move_base -->
     <!-- <include file="$(find msd700_navigation)/launch/algorithm/move_base.launch">

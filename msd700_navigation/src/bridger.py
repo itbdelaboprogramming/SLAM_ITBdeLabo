@@ -17,6 +17,8 @@ import rospy
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion
 from nav_msgs.msg import Odometry
 from ros_msd700_msgs.msg import HardwareCommand
+import numpy as np
+
 
 
 # Initialize ROS Node
@@ -67,34 +69,40 @@ def actual_vel_callback(msg:Twist):
 actual_vel_sub = rospy.Subscriber("/odom", Twist, actual_vel_callback)
  
 
+def map_value(x, in_min, in_max, out_min, out_max):
+    return np.interp(x, [in_min, in_max], [out_min, out_max])
 
-# def compute_pid():
-#     sda
 
-
+in_min  = -0.002
+in_max  = 0.002
+out_min = -150 
+out_max = 150
 
 def convert_pwm():
     global right_vel, left_vel, right_motor_speed, left_motor_speed
-    left_vel    = (vx-wz*wheel_distance/2)/wheel_radius
-    right_vel   = (vx+wz*wheel_distance/2)/wheel_radius
+    left_vel    = (vx-wz*wheel_distance/(2*10))/(wheel_radius*100)     # converted to meter
+    right_vel   = (vx+wz*wheel_distance/(2*10))/(wheel_radius*100)
 
     #PWM conversion (this is still brute force using exact value, further implementation better use PID)
-    if left_vel>0:
-        left_motor_speed = 100
-    elif left_vel<0:
-        left_motor_speed = -100
-    else:
-        left_motor_speed = 0
-    
-    if right_vel>0:
-        right_motor_speed = 100
-    elif right_vel<0:
-        right_motor_speed = -100
-    else:
-        right_motor_speed = 0
+    left_motor_speed    = map_value(left_vel, in_min, in_max, out_min, out_max)
+    right_motor_speed   = map_value(right_vel, in_min, in_max, out_min, out_max)
 
-    command_msg.right_motor_speed    = right_motor_speed
-    command_msg.left_motor_speed     = left_motor_speed
+    # if left_vel>0:
+    #     left_motor_speed = 100
+    # elif left_vel<0:
+    #     left_motor_speed = -100
+    # else:
+    #     left_motor_speed = 0
+    
+    # if right_vel>0:
+    #     right_motor_speed = 100
+    # elif right_vel<0:
+    #     right_motor_speed = -100
+    # else:
+    #     right_motor_speed = 0
+
+    command_msg.right_motor_speed   = right_motor_speed # right_vel #  
+    command_msg.left_motor_speed    =  left_motor_speed  # left_vel #  
     command_pub.publish(command_msg)
     rate.sleep()
 
