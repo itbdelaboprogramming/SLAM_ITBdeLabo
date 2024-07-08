@@ -80,8 +80,8 @@ out_max = 150
 
 def convert_pwm():
     global right_vel, left_vel, right_motor_speed, left_motor_speed
-    left_vel    = (vx-wz*wheel_distance/(2*10))/(wheel_radius*100)     # converted to meter
-    right_vel   = (vx+wz*wheel_distance/(2*10))/(wheel_radius*100)
+    left_vel    = (vx-wz*wheel_distance/(2*100))/(wheel_radius/100)     # converted to meter
+    right_vel   = (vx+wz*wheel_distance/(2*100))/(wheel_radius/100)
 
     #PWM conversion (this is still brute force using exact value, further implementation better use PID)
     left_motor_speed    = map_value(left_vel, in_min, in_max, out_min, out_max)
