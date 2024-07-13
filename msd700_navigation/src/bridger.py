@@ -106,81 +106,81 @@ def convert_pwm():
     command_pub.publish(command_msg)
     rate.sleep()
 
-def convert_pwm_PID():
-    delta_right_angle   = (2*np.pi * wheel_radius / 100 ) * (right_motor_pulse_delta / gear_ratio)
-    delta_left_angle    = (2*np.pi * wheel_radius / 100 ) * (left_motor_pulse_delta / gear_ratio)
+# def convert_pwm_PID():
+#     delta_right_angle   = (2*np.pi * wheel_radius / 100 ) * (right_motor_pulse_delta / gear_ratio)
+#     delta_left_angle    = (2*np.pi * wheel_radius / 100 ) * (left_motor_pulse_delta / gear_ratio)
 
 
-class PID:
-    def __init__(self, kp, ki, kd):
-        self.kp = kp
-        self.ki = ki
-        self.kd = kd
-        self.previous_error = 0
-        self.integral = 0
+# class PID:
+#     def __init__(self, kp, ki, kd):
+#         self.kp = kp
+#         self.ki = ki
+#         self.kd = kd
+#         self.previous_error = 0
+#         self.integral = 0
 
-    def compute(self, setpoint, measured_value, dt):
-        error = setpoint - measured_value
-        self.integral += error * dt
-        derivative = (error - self.previous_error) / dt
-        output = self.kp * error + self.ki * self.integral + self.kd * derivative
-        self.previous_error = error
-        return output
+#     def compute(self, setpoint, measured_value, dt):
+#         error = setpoint - measured_value
+#         self.integral += error * dt
+#         derivative = (error - self.previous_error) / dt
+#         output = self.kp * error + self.ki * self.integral + self.kd * derivative
+#         self.previous_error = error
+#         return output
 
-class MotorController:
-    def __init__(self):
-        rospy.init_node('motor_controller', anonymous=True)
+# class MotorController:
+#     def __init__(self):
+#         rospy.init_node('motor_controller', anonymous=True)
 
-        # PID parameters
-        self.left_pid = PID(kp=1.0, ki=0.0, kd=0.0)
-        self.right_pid = PID(kp=1.0, ki=0.0, kd=0.0)
+#         # PID parameters
+#         self.left_pid = PID(kp=1.0, ki=0.0, kd=0.0)
+#         self.right_pid = PID(kp=1.0, ki=0.0, kd=0.0)
 
-        # Subscriptions
-        self.cmd_vel_sub = rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback)
-        self.actual_speed_sub = rospy.Subscriber('/actual_speed', Twist, self.actual_speed_callback)
+#         # Subscriptions
+#         self.cmd_vel_sub = rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback)
+#         self.actual_speed_sub = rospy.Subscriber('/actual_speed', Twist, self.actual_speed_callback)
 
-        # Publisher
-        self.hardware_cmd_pub = rospy.Publisher('/HardwareCommand', HardwareCommand, queue_size=10)
+#         # Publisher
+#         self.hardware_cmd_pub = rospy.Publisher('/HardwareCommand', HardwareCommand, queue_size=10)
 
-        # Variables
-        self.cmd_vel = Twist()
-        self.actual_speed = Twist()
+#         # Variables
+#         self.cmd_vel = Twist()
+#         self.actual_speed = Twist()
 
-    def cmd_vel_callback(self, msg):
-        self.cmd_vel = msg
+#     def cmd_vel_callback(self, msg):
+#         self.cmd_vel = msg
 
-    def actual_speed_callback(self, msg):
-        self.actual_speed = msg
+#     def actual_speed_callback(self, msg):
+#         self.actual_speed = msg
 
-    def compute_pwm(self):
-        # Differential drive calculations
-        wheel_base = 0.5  # Distance between wheels
-        wheel_radius = 0.1  # Radius of the wheels
+#     def compute_pwm(self):
+#         # Differential drive calculations
+#         wheel_base = 0.5  # Distance between wheels
+#         wheel_radius = 0.1  # Radius of the wheels
 
-        linear_velocity = self.cmd_vel.linear.x
-        angular_velocity = self.cmd_vel.angular.z
+#         linear_velocity = self.cmd_vel.linear.x
+#         angular_velocity = self.cmd_vel.angular.z
 
-        left_speed_setpoint = (linear_velocity - angular_velocity * wheel_base / 2) / wheel_radius
-        right_speed_setpoint = (linear_velocity + angular_velocity * wheel_base / 2) / wheel_radius
+#         left_speed_setpoint = (linear_velocity - angular_velocity * wheel_base / 2) / wheel_radius
+#         right_speed_setpoint = (linear_velocity + angular_velocity * wheel_base / 2) / wheel_radius
 
-        dt = 1.0 / 10.0  # Assuming a control loop of 10 Hz
+#         dt = 1.0 / 10.0  # Assuming a control loop of 10 Hz
 
-        left_pwm = self.left_pid.compute(left_speed_setpoint, self.actual_speed.linear.x, dt)
-        right_pwm = self.right_pid.compute(right_speed_setpoint, self.actual_speed.linear.x, dt)
+#         left_pwm = self.left_pid.compute(left_speed_setpoint, self.actual_speed.linear.x, dt)
+#         right_pwm = self.right_pid.compute(right_speed_setpoint, self.actual_speed.linear.x, dt)
 
-        # Create HardwareCommand message
-        hardware_cmd = HardwareCommand()
-        hardware_cmd.left_pwm = left_pwm
-        hardware_cmd.right_pwm = right_pwm
+#         # Create HardwareCommand message
+#         hardware_cmd = HardwareCommand()
+#         hardware_cmd.left_pwm = left_pwm
+#         hardware_cmd.right_pwm = right_pwm
 
-        return hardware_cmd
+#         return hardware_cmd
 
-    def run(self):
-        rate = rospy.Rate(10)  # 10 Hz
-        while not rospy.is_shutdown():
-            hardware_cmd = self.compute_pwm()
-            self.hardware_cmd_pub.publish(hardware_cmd)
-            rate.sleep()
+#     def run(self):
+#         rate = rospy.Rate(10)  # 10 Hz
+#         while not rospy.is_shutdown():
+#             hardware_cmd = self.compute_pwm()
+#             self.hardware_cmd_pub.publish(hardware_cmd)
+#             rate.sleep()
 
 
 
