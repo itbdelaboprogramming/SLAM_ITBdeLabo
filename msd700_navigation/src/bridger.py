@@ -73,8 +73,8 @@ def map_value(x, in_min, in_max, out_min, out_max):
     return np.interp(x, [in_min, in_max], [out_min, out_max])
 
 
-in_min  = -0.002
-in_max  = 0.002
+in_min  = -0.02
+in_max  = 0.02
 out_min = -150 
 out_max = 150
 
