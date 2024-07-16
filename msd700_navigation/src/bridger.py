@@ -73,8 +73,8 @@ def map_value(x, in_min, in_max, out_min, out_max):
     return np.interp(x, [in_min, in_max], [out_min, out_max])
 
 
-in_min  = -0.02
-in_max  = 0.02
+in_min  = -12
+in_max  = 12
 out_min = -150 
 out_max = 150
 
@@ -84,11 +84,11 @@ def convert_pwm():
     right_vel   = (vx+wz*wheel_distance/(2*100))/(wheel_radius/100)
 
     #PWM conversion (this is still brute force using exact value, further implementation better use PID)
-    # left_motor_speed    = map_value(left_vel, in_min, in_max, out_min, out_max)
-    # right_motor_speed   = map_value(right_vel, in_min, in_max, out_min, out_max)
+    left_motor_speed    = map_value(left_vel, in_min, in_max, out_min, out_max)
+    right_motor_speed   = map_value(right_vel, in_min, in_max, out_min, out_max)
 
-    left_motor_speed    = left_vel
-    right_motor_speed   = right_vel
+    # left_motor_speed    = left_vel
+    # right_motor_speed   = right_vel
     
     # if left_vel>0:
     #     left_motor_speed = 100
