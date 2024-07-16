@@ -84,9 +84,12 @@ def convert_pwm():
     right_vel   = (vx+wz*wheel_distance/(2*100))/(wheel_radius/100)
 
     #PWM conversion (this is still brute force using exact value, further implementation better use PID)
-    left_motor_speed    = map_value(left_vel, in_min, in_max, out_min, out_max)
-    right_motor_speed   = map_value(right_vel, in_min, in_max, out_min, out_max)
+    # left_motor_speed    = map_value(left_vel, in_min, in_max, out_min, out_max)
+    # right_motor_speed   = map_value(right_vel, in_min, in_max, out_min, out_max)
 
+    left_motor_speed    = left_vel
+    right_motor_speed   = right_vel
+    
     # if left_vel>0:
     #     left_motor_speed = 100
     # elif left_vel<0:
