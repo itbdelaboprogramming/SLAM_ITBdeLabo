@@ -79,15 +79,17 @@ in_min  = -0.002
 in_max  = 0.002
 out_min = -150 
 out_max = 150
+mul_factor = 10 # add more speed
+rotation_factor = 10
 
 def convert_pwm():
     global right_vel, left_vel, right_motor_speed, left_motor_speed
-    # left_vel    = (vx-wz*wheel_distance/(2*100))/(wheel_radius/100)     # converted to meter
-    # right_vel   = (vx+wz*wheel_distance/(2*100))/(wheel_radius/100)
+    left_vel    = (vx-wz*wheel_distance/(2*100)*rotation_factor)/(wheel_radius/100) * mul_factor    # converted to meter
+    right_vel   = (vx+wz*wheel_distance/(2*100)*rotation_factor)/(wheel_radius/100) * mul_factor
 
     #PWM conversion (this is still brute force using exact value, further implementation better use PID)
-    left_vel    = (vx-wz*wheel_distance/(2*10))/(wheel_radius*100)     # converted to meter
-    right_vel   = (vx+wz*wheel_distance/(2*10))/(wheel_radius*100)
+    # left_vel    = (vx-wz*wheel_distance/(2*10))/(wheel_radius*100)     # converted to meter
+    # right_vel   = (vx+wz*wheel_distance/(2*10))/(wheel_radius*100)
     # left_motor_speed    = map_value(left_vel, in_min, in_max, out_min, out_max)
     # right_motor_speed   = map_value(right_vel, in_min, in_max, out_min, out_max)
 
@@ -116,78 +118,6 @@ def convert_pwm():
 # def convert_pwm_PID():
 #     delta_right_angle   = (2*np.pi * wheel_radius / 100 ) * (right_motor_pulse_delta / gear_ratio)
 #     delta_left_angle    = (2*np.pi * wheel_radius / 100 ) * (left_motor_pulse_delta / gear_ratio)
-
-
-# class PID:
-#     def __init__(self, kp, ki, kd):
-#         self.kp = kp
-#         self.ki = ki
-#         self.kd = kd
-#         self.previous_error = 0
-#         self.integral = 0
-
-#     def compute(self, setpoint, measured_value, dt):
-#         error = setpoint - measured_value
-#         self.integral += error * dt
-#         derivative = (error - self.previous_error) / dt
-#         output = self.kp * error + self.ki * self.integral + self.kd * derivative
-#         self.previous_error = error
-#         return output
-
-# class MotorController:
-#     def __init__(self):
-#         rospy.init_node('motor_controller', anonymous=True)
-
-#         # PID parameters
-#         self.left_pid = PID(kp=1.0, ki=0.0, kd=0.0)
-#         self.right_pid = PID(kp=1.0, ki=0.0, kd=0.0)
-
-#         # Subscriptions
-#         self.cmd_vel_sub = rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback)
-#         self.actual_speed_sub = rospy.Subscriber('/actual_speed', Twist, self.actual_speed_callback)
-
-#         # Publisher
-#         self.hardware_cmd_pub = rospy.Publisher('/HardwareCommand', HardwareCommand, queue_size=10)
-
-#         # Variables
-#         self.cmd_vel = Twist()
-#         self.actual_speed = Twist()
-
-#     def cmd_vel_callback(self, msg):
-#         self.cmd_vel = msg
-
-#     def actual_speed_callback(self, msg):
-#         self.actual_speed = msg
-
-#     def compute_pwm(self):
-#         # Differential drive calculations
-#         wheel_base = 0.5  # Distance between wheels
-#         wheel_radius = 0.1  # Radius of the wheels
-
-#         linear_velocity = self.cmd_vel.linear.x
-#         angular_velocity = self.cmd_vel.angular.z
-
-#         left_speed_setpoint = (linear_velocity - angular_velocity * wheel_base / 2) / wheel_radius
-#         right_speed_setpoint = (linear_velocity + angular_velocity * wheel_base / 2) / wheel_radius
-
-#         dt = 1.0 / 10.0  # Assuming a control loop of 10 Hz
-
-#         left_pwm = self.left_pid.compute(left_speed_setpoint, self.actual_speed.linear.x, dt)
-#         right_pwm = self.right_pid.compute(right_speed_setpoint, self.actual_speed.linear.x, dt)
-
-#         # Create HardwareCommand message
-#         hardware_cmd = HardwareCommand()
-#         hardware_cmd.left_pwm = left_pwm
-#         hardware_cmd.right_pwm = right_pwm
-
-#         return hardware_cmd
-
-#     def run(self):
-#         rate = rospy.Rate(10)  # 10 Hz
-#         while not rospy.is_shutdown():
-#             hardware_cmd = self.compute_pwm()
-#             self.hardware_cmd_pub.publish(hardware_cmd)
-#             rate.sleep()
 
 
 

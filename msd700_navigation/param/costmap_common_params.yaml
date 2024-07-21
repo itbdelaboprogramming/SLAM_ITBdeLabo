@@ -1,5 +1,5 @@
 obstacle_range: 1
-raytrace_range: 3.5
+raytrace_range: 1.5
 
 footprint: [[-0.6, -0.425], [0.6, -0.425], [0.6,0.425], [-0.6,0.425]]         # Using extended hand
 # footprint: [[-0.275, -0.20], [0.275, -0.20], [0.275,0.20], [-0.275,0.20]]   # Without extended hand
