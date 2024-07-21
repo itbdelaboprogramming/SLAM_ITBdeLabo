@@ -108,8 +108,8 @@ def convert_pwm():
     # else:
     #     right_motor_speed = 0
 
-    command_msg.right_motor_speed   = right_motor_speed # right_vel #  
-    command_msg.left_motor_speed    =  left_motor_speed  # left_vel #  
+    command_msg.right_motor_speed   = right_vel # right_motor_speed #  
+    command_msg.left_motor_speed    = left_vel # left_motor_speed  #   
     command_pub.publish(command_msg)
     rate.sleep()
 
