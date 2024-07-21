@@ -6,12 +6,12 @@
     <include file="$(find msd700_navigation)/launch/primitive/bridger.launch"/>
   
     <!-- move_base -->
-    <!-- <include file="$(find msd700_navigation)/launch/algorithm/move_base.launch">
+    <include file="$(find msd700_navigation)/launch/algorithm/move_base.launch">
         <arg name="move_forward_only" value="$(arg move_forward_only)"/>
-    </include> -->
+    </include>
 
     <!-- exploration -->
-    <!-- <include file="$(find explore_lite)/launch/explore.launch" /> -->
+    <include file="$(find explore_lite)/launch/explore.launch" />
 
 
   </launch>
