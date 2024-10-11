@@ -12,3 +12,4 @@ sudo apt-get install -y ros-noetic-turtlebot3 ros-noetic-turtlebot3-msgs ros-noe
 sudo apt-get install -y ros-noetic-rtabmap ros-noetic-rtabmap-launch ros-noetic-rtabmap-demos ros-noetic-imu-filter-madgwick ros-noetic-realsense2-camera
 pip install paho-mqtt
 sudo apt-get install -y ros-noetic-hector-mapping
+sudo apt-get install -y ros-noetic-rosbridge-suite
